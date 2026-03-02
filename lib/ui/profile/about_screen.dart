@@ -253,7 +253,7 @@ class AboutScreen extends StatelessWidget {
           SocialButton(
               icon: Icons.language,
               label: "Portfolio",
-              url: "https://naveenxd.eu.org",
+              url: "https://nxd.devh.in",
               isFullWidth: true,
               centerContent: true),
         ],
