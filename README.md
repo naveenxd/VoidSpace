@@ -1,63 +1,96 @@
-# Void Space
+<p align="center">
+  <h1 align="center">Void Space</h1>
+  <p align="center">
+    A minimal, offline-first knowledge space — built for clarity, calm, and focus.
+    <br />
+    <em>No noise. No gimmicks. Just your thoughts.</em>
+  </p>
+</p>
 
-Void Space is a minimal, offline-first knowledge space focused on clarity and focus. It is designed to be a quiet place for your thoughts, notes, and references—without noise, pressure, or productivity gimmicks.
+---
 
-## 🌟 Philosophy
+## Philosophy
 
-Void aims to:
+Void Space isn't another productivity tool. It's a quiet digital room for your links, notes, and references — designed to stay out of your way.
 
-- **Stay minimal and calm**: Reduce cognitive load with a clean, distraction-free interface.
-- **Avoid productivity gimmicks**: Let ideas exist without forcing structure.
-- **Respect privacy**: Your data stays on your device using fast, local storage.
+- **Minimal & calm** — A distraction-free interface that reduces cognitive load.
+- **No productivity theater** — Let ideas exist without forcing artificial structure.
+- **Privacy-first** — Your data lives on your device. No accounts, no cloud, no tracking.
 
-## ✨ Features
+## Features
 
-- **Semantic Search**: Find your thoughts naturally. Void Space uses local embeddings to power semantic search
-- **Frictionless Capture**: Save links, text, and notes instantly from anywhere using the native Share Intent (Android) with a seamless experience.
-- **Inline Editing**: Quickly edit titles, tags, and notes inline without breaking your flow.
-- **Beautiful UX**: Smooth pull-to-refresh animations, staggered grid layouts, and a cohesive design language.
+### 🧠 Semantic Search
+Find your thoughts naturally. Void Space runs a local [all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) ONNX model on-device to generate 384-dimensional embeddings, powering cosine-similarity search with automatic keyword fallback.
 
-## 🛠️ Tech Stack
+### ⚡ Frictionless Capture
+Save links, text, and images instantly from any app using Android's native Share Intent. A dedicated share entry point (`shareMain`) launches a lightweight floating orb UI — so saving content feels instantaneous.
 
-- **Framework**: [Flutter](https://flutter.dev/) (v3.10+)
-- **Local Storage**: [Hive](https://pub.dev/packages/hive) (Fast, secure NoSQL database)
-- **AI & Embeddings**: Local vector embeddings for semantic search
+### 🤖 AI-Powered Analysis
+Content is automatically analyzed using Cloudflare Workers AI (Llama 3.2) to extract:
+- Smart, contextual **tags**
+- A concise **TL;DR** (single sentence)
+- A longer **summary** (3–5 sentences)
+- Cleaned-up **titles**
 
-- **UI/UX**: Custom animations, Shimmer loading, Staggered Grid View
+Falls back to keyword-based heuristics when AI is unavailable.
 
-## 🚀 Getting Started
+### 🔗 Rich Link Metadata
+When you save a URL, Void Space scrapes Open Graph metadata (title, description, image) and auto-classifies the link type — `video`, `social`, or generic `link` — based on the domain.
+
+### 🔐 Biometric Lock
+Optional biometric/PIN authentication via the `local_auth` package. The lock screen prompt reads *"Handshake required to enter the void."*
+
+### 🎨 Polished UI
+- Staggered grid layout with shimmer loading states
+- Inline editing for titles, tags, and notes
+- Custom animations and pull-to-refresh
+- Dark/Light mode with system detection
+- Onboarding flow with profile setup
+- Custom painters and glass-morphism effects
+
+### 📦 Data Portability
+Import and export your entire vault as JSON — keep full ownership of your data.
+
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Framework** | [Flutter](https://flutter.dev/) 3.10+ / Dart 3.10+ |
+| **Local Storage** | [Hive](https://pub.dev/packages/hive) — fast, encrypted NoSQL |
+| **State Management** | [Provider](https://pub.dev/packages/provider) |
+| **On-Device AI** | [ONNX Runtime](https://pub.dev/packages/onnxruntime) — all-MiniLM-L6-v2 |
+| **Cloud AI** | Cloudflare Workers AI — Llama 3.2 |
+| **Metadata** | Open Graph scraping via `http` + `html` |
+| **Auth** | [local_auth](https://pub.dev/packages/local_auth) — biometric/PIN |
+| **UI** | Google Fonts, Staggered Grid, Shimmer, Custom Painters |
+
+## Getting Started
 
 ### Prerequisites
 
-- Flutter SDK (`^3.10.7` or later)
-- Dart SDK
-- Android Studio / Xcode for platform-specific builds
+- Flutter SDK `^3.10.7` or later
+- Dart SDK (bundled with Flutter)
+- Android Studio for Android builds (primary platform)
 
 ### Installation
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/naveenxd/VoidSpace.git
-   cd VoidSpace
-   ```
-2. Install dependencies:
-   ```bash
-   flutter pub get
-   ```
-3. Run the app:
-   ```bash
-   flutter run
-   ```
+```bash
+# Clone the repository
+git clone https://github.com/naveenxd/VoidSpace.git
+cd VoidSpace
 
-## 🗺️ Roadmap
+# Install dependencies
+flutter pub get
 
-We are constantly exploring new ways to make Void Space better. Some planned features include:
+# Run on a connected device or emulator
+flutter run
+```
 
-- **Folders & Collections**: Custom collections with drag-and-drop.
-- **Security Vault**: Biometric/password-locked notes.
+### ONNX Model
 
-For a detailed list of planned features and improvements, check out [features.md](features.md).
+The semantic search model (`assets/models/model.onnx`) and tokenizer (`assets/models/tokenizer.json`) are bundled in the repo. No additional downloads are required.
 
-## 📄 License
+## License
 
 TBD
