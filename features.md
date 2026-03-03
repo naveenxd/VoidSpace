@@ -24,7 +24,6 @@ A streamlined list of planned improvements.
 
 ## 🔐 Data & Security
 
-- [ ] **Cloud Sync**: Firebase/Supabase backup and cross-device sync.
 - [ ] **Vault**: Encrypted notes with biometric/password lock.
 - [ ] **Interoperability**: JSON/CSV export and multi-app import.
 - [ ] **Sharing**: Quick share-out and clipboard integration.
