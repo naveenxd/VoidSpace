@@ -22,6 +22,7 @@ import 'package:void_space/ui/theme/void_theme.dart';
 import 'package:void_space/ui/utils/type_helpers.dart';
 import 'package:void_space/ui/widgets/void_dialog.dart';
 import 'package:void_space/ui/widgets/void_snackbar.dart';
+import 'package:void_space/services/void_share_service.dart';
 
 // Components
 
@@ -29,6 +30,7 @@ import 'components/detail_metadata.dart';
 import 'components/edit_item_form.dart';
 import 'components/link_card.dart';
 import 'components/summary_section.dart';
+
 class ItemDetailScreen extends StatefulWidget {
   final VoidItem item;
   final VoidCallback onDelete;
@@ -49,7 +51,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   late TextEditingController _contentController;
   bool _isEditMode = false;
   bool _isNoteType = false;
-  
+
   // AI & Similar Items State
   bool _isGeneratingAI = false;
 
@@ -62,7 +64,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     _editedItem = widget.item;
     _isNoteType = _editedItem.type == 'note';
     _editedTags = List.from(_editedItem.tags);
-    
+
     _titleController = TextEditingController(text: _editedItem.title);
     _contentController = TextEditingController(text: _editedItem.content);
   }
@@ -95,7 +97,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     );
 
     await VoidStore.update(updatedItem);
-    
+
     if (mounted) {
       setState(() {
         _editedItem = updatedItem;
@@ -117,15 +119,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   }
 
   Future<void> _saveTagsOnly(List<String> tags) async {
-      // Updates state and persists to store immediately
-      // This is used for direct tag manipulation outside full edit mode
-      final updatedItem = _editedItem.copyWith(tags: tags);
-      await VoidStore.update(updatedItem);
-      setState(() {
-          _editedItem = updatedItem;
-          _editedTags = tags;
-      });
-      widget.onDelete(); // Trigger refresh on parent
+    // Updates state and persists to store immediately
+    // This is used for direct tag manipulation outside full edit mode
+    final updatedItem = _editedItem.copyWith(tags: tags);
+    await VoidStore.update(updatedItem);
+    setState(() {
+      _editedItem = updatedItem;
+      _editedTags = tags;
+    });
+    widget.onDelete(); // Trigger refresh on parent
   }
 
   Future<void> _openFile(String path) async {
@@ -138,7 +140,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
         } else {
           if (!mounted) return;
-          VoidSnackBar.show(context, message: 'Could not open link', isError: true);
+          VoidSnackBar.show(
+            context,
+            message: 'Could not open link',
+            isError: true,
+          );
         }
         return;
       }
@@ -153,7 +159,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       final result = await OpenFilex.open(path);
       if (result.type != ResultType.done) {
         if (!mounted) return;
-        VoidSnackBar.show(context, message: 'Could not open file: ${result.message}', isError: true);
+        VoidSnackBar.show(
+          context,
+          message: 'Could not open file: ${result.message}',
+          isError: true,
+        );
       }
     } catch (e) {
       debugPrint('Error opening file: $e');
@@ -173,15 +183,13 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     if (confirmed == true) {
       await VoidStore.delete(widget.item.id);
       HapticService.heavy();
-      
+
       if (!mounted) return;
       // ignore: use_build_context_synchronously
       Navigator.pop(context);
       widget.onDelete();
     }
   }
-
-
 
   void _showShareMenu() {
     final theme = VoidTheme.of(context);
@@ -192,63 +200,80 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: theme.textPrimary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(2),
-                ),
+      builder: (sheetContext) {
+        bool isSharingPdf = false;
+        bool isSharingWebsite = false;
+
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Container(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: theme.textPrimary.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    'SHARE AS',
+                    style: GoogleFonts.ibmPlexMono(
+                      color: theme.textSecondary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 2,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildShareOption(
+                    icon: Icons.picture_as_pdf_rounded,
+                    label: 'PDF Document',
+                    isLoading: isSharingPdf,
+                    onTap: () async {
+                      if (isSharingPdf || isSharingWebsite) return;
+                      setSheetState(() => isSharingPdf = true);
+                      await _shareAsPdf(sheetContext);
+                      if (context.mounted)
+                        setSheetState(() => isSharingPdf = false);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildShareOption(
+                    icon: Icons.public_rounded,
+                    label: 'Share as Website',
+                    isLoading: isSharingWebsite,
+                    onTap: () async {
+                      if (isSharingPdf || isSharingWebsite) return;
+                      setSheetState(() => isSharingWebsite = true);
+                      await _shareAsWebsite(sheetContext);
+                      if (context.mounted)
+                        setSheetState(() => isSharingWebsite = false);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildShareOption(
+                    icon: Icons.text_fields_rounded,
+                    label: 'Plain Text',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _shareAsText();
+                    },
+                  ),
+                  SizedBox(height: MediaQuery.of(context).padding.bottom),
+                ],
               ),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'SHARE AS',
-              style: GoogleFonts.ibmPlexMono(
-                color: theme.textSecondary,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 2,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _buildShareOption(
-              icon: Icons.picture_as_pdf_rounded,
-              label: 'PDF Document',
-              onTap: () {
-                Navigator.pop(context);
-                _shareAsPdf();
-              },
-            ),
-            const SizedBox(height: 12),
-            _buildShareOption(
-              icon: Icons.html_rounded,
-              label: 'HTML File',
-              onTap: () {
-                Navigator.pop(context);
-                _shareAsHtml();
-              },
-            ),
-            const SizedBox(height: 12),
-            _buildShareOption(
-              icon: Icons.text_fields_rounded,
-              label: 'Plain Text',
-              onTap: () {
-                Navigator.pop(context);
-                _shareAsText();
-              },
-            ),
-            SizedBox(height: MediaQuery.of(context).padding.bottom),
-          ],
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -256,6 +281,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     required IconData icon,
     required String label,
     required VoidCallback onTap,
+    bool isLoading = false,
   }) {
     final theme = VoidTheme.of(context);
     return GestureDetector(
@@ -269,7 +295,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         ),
         child: Row(
           children: [
-            Icon(icon, color: theme.textPrimary, size: 24),
+            if (isLoading)
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(theme.textPrimary),
+                ),
+              )
+            else
+              Icon(icon, color: theme.textPrimary, size: 24),
             const SizedBox(width: 16),
             Text(
               label,
@@ -280,33 +316,65 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               ),
             ),
             const Spacer(),
-            Icon(Icons.arrow_forward_ios_rounded, color: theme.textPrimary.withValues(alpha: 0.24), size: 16),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: theme.textPrimary.withValues(alpha: 0.24),
+              size: 16,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Future<void> _shareAsPdf() async {
-    // TODO: Implement PDF generation
+  Future<void> _shareAsPdf(BuildContext sheetContext) async {
     HapticService.light();
-    VoidSnackBar.show(context, message: 'Exporting as PDF... (Coming Soon)', icon: Icons.picture_as_pdf_rounded);
+    try {
+      final pdfFile = await VoidShareService.generatePdfFile(_editedItem);
+      HapticService.success();
+      if (!mounted) return;
+      Navigator.pop(sheetContext);
+      // ignore: deprecated_member_use
+      await Share.shareXFiles([
+        XFile(pdfFile.path),
+      ], text: 'Shared from Void Space');
+    } catch (e) {
+      if (!mounted) return;
+      HapticService.heavy();
+      Navigator.pop(sheetContext);
+      VoidSnackBar.show(context, message: 'Failed to share: $e', isError: true);
+    }
   }
 
-  Future<void> _shareAsHtml() async {
-    // TODO: Implement HTML generation
+  Future<void> _shareAsWebsite(BuildContext sheetContext) async {
     HapticService.light();
-    VoidSnackBar.show(context, message: 'Exporting as HTML... (Coming Soon)', icon: Icons.html_rounded);
+    try {
+      final shortUrl = await VoidShareService.shareAsWebsite(_editedItem);
+      Clipboard.setData(ClipboardData(text: shortUrl));
+      HapticService.success();
+      if (!mounted) return;
+      Navigator.pop(sheetContext);
+      VoidSnackBar.show(
+        context,
+        message: 'Website link copied to clipboard!',
+        icon: Icons.check_circle_rounded,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      HapticService.heavy();
+      Navigator.pop(sheetContext);
+      VoidSnackBar.show(context, message: 'Failed to share: $e', isError: true);
+    }
   }
 
   Future<void> _shareAsText() async {
     final String shareText = '${_editedItem.title}\n\n${_editedItem.content}';
     if (_editedItem.type == 'link') {
-       // ignore: deprecated_member_use
-       await Share.share('${_editedItem.title}\n${_editedItem.content}');
+      // ignore: deprecated_member_use
+      await Share.share('${_editedItem.title}\n${_editedItem.content}');
     } else {
-       // ignore: deprecated_member_use
-       await Share.share(shareText);
+      // ignore: deprecated_member_use
+      await Share.share(shareText);
     }
   }
 
@@ -317,40 +385,47 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
     try {
       final context = await AIService.analyze(
-        _editedItem.title, 
+        _editedItem.title,
         _editedItem.content,
         // Only pass image path if it's local
-        imagePath: isLocalPath(_editedItem.imageUrl ?? '') ? _editedItem.imageUrl : null,
+        imagePath: isLocalPath(_editedItem.imageUrl ?? '')
+            ? _editedItem.imageUrl
+            : null,
         url: _editedItem.type == 'link' ? _editedItem.content : null,
       );
-      
+
       final updatedItem = _editedItem.copyWith(
-        title: context.title.isNotEmpty ? context.title : _editedItem.title, // Update title!
+        title: context.title.isNotEmpty
+            ? context.title
+            : _editedItem.title, // Update title!
         summary: context.summary,
         tldr: context.tldr,
         // Only update content for notes, preserve path/url for files/links
-        content: _editedItem.type == 'note' ? context.summary : _editedItem.content,
+        content: _editedItem.type == 'note'
+            ? context.summary
+            : _editedItem.content,
         tags: context.tags, // Refresh tags as well
       );
-      
+
       await VoidStore.update(updatedItem);
-      
+
       if (mounted) {
         setState(() {
           _editedItem = updatedItem;
-          _titleController.text = updatedItem.title; // Also update text controller
+          _titleController.text =
+              updatedItem.title; // Also update text controller
           _editedTags = List.from(updatedItem.tags); // Update local tags state
           _isGeneratingAI = false;
         });
-        widget.onDelete(); // Trigger refresh on parent so home screen is updated
+        widget
+            .onDelete(); // Trigger refresh on parent so home screen is updated
         HapticService.success();
       }
     } catch (e) {
       if (mounted) {
-        final theme = VoidTheme.of(context);
         setState(() => _isGeneratingAI = false);
         HapticService.heavy();
-        
+
         VoidSnackBar.show(
           context,
           message: 'AI Generation Failed: ${e.toString()}',
@@ -371,7 +446,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              if (_editedItem.imageUrl != null && _editedItem.imageUrl!.isNotEmpty)
+              if (_editedItem.imageUrl != null &&
+                  _editedItem.imageUrl!.isNotEmpty)
                 SliverAppBar(
                   expandedHeight: 400,
                   stretch: true,
@@ -379,9 +455,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   // backgroundColor: Colors.transparent,
                   automaticallyImplyLeading: false,
                   flexibleSpace: FlexibleSpaceBar(
-                    stretchModes: const [
-                      StretchMode.zoomBackground,
-                    ],
+                    stretchModes: const [StretchMode.zoomBackground],
                     background: _buildHeaderImageContent(),
                   ),
                 ),
@@ -402,7 +476,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 ),
               ),
 
-
               SliverToBoxAdapter(
                 child: Container(
                   decoration: BoxDecoration(
@@ -421,88 +494,89 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       top: 32,
                     ),
                     child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title Section
-                      if (_isEditMode)
-                        EditItemForm(
-                          titleController: _titleController,
-                          contentController: _contentController,
-                          isNoteType: _isNoteType,
-                        )
-                      else
-                        Text(
-                          _editedItem.title,
-                          style: GoogleFonts.ibmPlexSans(
-                            color: theme.textPrimary,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            height: 1.2,
-                            letterSpacing: -0.5,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Title Section
+                        if (_isEditMode)
+                          EditItemForm(
+                            titleController: _titleController,
+                            contentController: _contentController,
+                            isNoteType: _isNoteType,
+                          )
+                        else
+                          Text(
+                            _editedItem.title,
+                            style: GoogleFonts.ibmPlexSans(
+                              color: theme.textPrimary,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              height: 1.2,
+                              letterSpacing: -0.5,
+                            ),
                           ),
-                        ),
 
-                      const SizedBox(height: VoidDesign.spaceLG),
-                      
-                      // Metadata & Tags
-                      DetailMetadata(
-                        item: _editedItem,
-                        tags: _editedTags,
-                        onAddTag: (tag) async {
+                        const SizedBox(height: VoidDesign.spaceLG),
+
+                        // Metadata & Tags
+                        DetailMetadata(
+                          item: _editedItem,
+                          tags: _editedTags,
+                          onAddTag: (tag) async {
                             await _addTag(tag);
                             await _saveTagsOnly(_editedTags);
-                        },
-                        onRemoveTag: _removeTag,
-                        onSaveTags: _saveTagsOnly,
-                      ),
+                          },
+                          onRemoveTag: _removeTag,
+                          onSaveTags: _saveTagsOnly,
+                        ),
 
-                      const SizedBox(height: VoidDesign.space2XL),
+                        const SizedBox(height: VoidDesign.space2XL),
 
-                      // Dynamic Content Area
-                      if (_isEditMode && _isNoteType)
-                         // Content handled in EditItemForm above
-                         const SizedBox.shrink()
-                      else if (_editedItem.type == 'link') ...[
-                        LinkCard(item: _editedItem),
-                        if ((_editedItem.summary?.isNotEmpty ?? false) || (_editedItem.tldr?.isNotEmpty ?? false)) ...[
-                          const SizedBox(height: VoidDesign.spaceXL),
-                          SummarySection(
-                            item: _editedItem,
-                            isGenerating: _isGeneratingAI,
-                            onGenerate: _generateAIContext,
-                          ),
-                        ]
-                      ] else ...[
-                        // Show AI Summary if available (TLDR, etc.)
-                        if ((_editedItem.summary?.isNotEmpty ?? false) || (_editedItem.tldr?.isNotEmpty ?? false)) ...[
-                          SummarySection(
-                            item: _editedItem,
-                            isGenerating: _isGeneratingAI,
-                            onGenerate: _generateAIContext,
-                          ),
-                          const SizedBox(height: VoidDesign.spaceXL),
+                        // Dynamic Content Area
+                        if (_isEditMode && _isNoteType)
+                          // Content handled in EditItemForm above
+                          const SizedBox.shrink()
+                        else if (_editedItem.type == 'link') ...[
+                          LinkCard(item: _editedItem),
+                          if ((_editedItem.summary?.isNotEmpty ?? false) ||
+                              (_editedItem.tldr?.isNotEmpty ?? false)) ...[
+                            const SizedBox(height: VoidDesign.spaceXL),
+                            SummarySection(
+                              item: _editedItem,
+                              isGenerating: _isGeneratingAI,
+                              onGenerate: _generateAIContext,
+                            ),
+                          ],
+                        ] else ...[
+                          // Show AI Summary if available (TLDR, etc.)
+                          if ((_editedItem.summary?.isNotEmpty ?? false) ||
+                              (_editedItem.tldr?.isNotEmpty ?? false)) ...[
+                            SummarySection(
+                              item: _editedItem,
+                              isGenerating: _isGeneratingAI,
+                              onGenerate: _generateAIContext,
+                            ),
+                            const SizedBox(height: VoidDesign.spaceXL),
+                          ],
+
+                          // Only show raw content if it's not identical to the summary/tldr
+                          // (Usually for images, the 'content' field is just a duplicate of summary)
+                          if (_shouldShowContentSection())
+                            _buildContentSection(),
                         ],
 
-                        // Only show raw content if it's not identical to the summary/tldr
-                        // (Usually for images, the 'content' field is just a duplicate of summary)
-                        if (_shouldShowContentSection())
-                           _buildContentSection(),
-                      ],
-
-                      /* 
+                        /* 
                          Moved Open File button to bottom actions row 
                          for better reachability and cleaner UI 
                       */
 
-
-                      // Actions (View, Share, Delete) - Only visible when not editing
-                      if (!_isEditMode) ...[
-                        const SizedBox(height: 24), // Reduced from 60
-                        _buildBottomActions(context),
+                        // Actions (View, Share, Delete) - Only visible when not editing
+                        if (!_isEditMode) ...[
+                          const SizedBox(height: 24), // Reduced from 60
+                          _buildBottomActions(context),
+                        ],
                       ],
-                    ],
+                    ),
                   ),
-                ),
                 ),
               ),
             ],
@@ -510,12 +584,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
           // 2. Floating Header Actions
           Positioned(
-            top: 0, 
-            left: 0, 
+            top: 0,
+            left: 0,
             right: 0,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     GestureDetector(
@@ -534,9 +611,15 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.black.withValues(alpha: 0.2),
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.1),
+                              ),
                             ),
-                            child: const Icon(Icons.arrow_back_ios_new_rounded, size: 20, color: Colors.white),
+                            child: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              size: 20,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
@@ -553,17 +636,23 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                             height: 40,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: _isEditMode 
+                              color: _isEditMode
                                   ? Colors.greenAccent.withValues(alpha: 0.2)
                                   : Colors.black.withValues(alpha: 0.2),
                               border: Border.all(
-                                color: _isEditMode ? Colors.greenAccent : Colors.white.withValues(alpha: 0.1)
+                                color: _isEditMode
+                                    ? Colors.greenAccent
+                                    : Colors.white.withValues(alpha: 0.1),
                               ),
                             ),
                             child: Icon(
-                              _isEditMode ? Icons.check_rounded : Icons.edit_rounded,
+                              _isEditMode
+                                  ? Icons.check_rounded
+                                  : Icons.edit_rounded,
                               size: 20,
-                              color: _isEditMode ? Colors.greenAccent : Colors.white,
+                              color: _isEditMode
+                                  ? Colors.greenAccent
+                                  : Colors.white,
                             ),
                           ),
                         ),
@@ -583,17 +672,20 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     final theme = VoidTheme.of(context);
     if (_editedItem.imageUrl != null && _editedItem.imageUrl!.isNotEmpty) {
       return Container(
-        decoration: BoxDecoration(
-          color: theme.bgCard.withValues(alpha: 0.2),
-        ),
+        decoration: BoxDecoration(color: theme.bgCard.withValues(alpha: 0.2)),
         child: isLocalPath(_editedItem.imageUrl!)
             ? Image.file(File(_editedItem.imageUrl!), fit: BoxFit.cover)
             : CachedNetworkImage(
                 imageUrl: _editedItem.imageUrl!,
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(color: theme.textPrimary.withValues(alpha: 0.05)),
+                placeholder: (context, url) =>
+                    Container(color: theme.textPrimary.withValues(alpha: 0.05)),
                 errorWidget: (context, url, error) => Center(
-                  child: Icon(Icons.image_not_supported_rounded, color: theme.textPrimary.withValues(alpha: 0.24), size: 40),
+                  child: Icon(
+                    Icons.image_not_supported_rounded,
+                    color: theme.textPrimary.withValues(alpha: 0.24),
+                    size: 40,
+                  ),
                 ),
               ),
       );
@@ -653,7 +745,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   Widget _buildBottomActions(BuildContext context) {
     final theme = VoidTheme.of(context);
     final isFile = isFileType(_editedItem.type);
-    
+
     return Column(
       children: [
         Row(
@@ -661,8 +753,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             // Share Button (Secondary)
             GestureDetector(
               onTap: () {
-                 HapticService.light();
-                 _showShareMenu();
+                HapticService.light();
+                _showShareMenu();
               },
               child: Container(
                 height: 56,
@@ -672,14 +764,20 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: theme.borderSubtle),
                 ),
-                child: Icon(Icons.ios_share_rounded, color: theme.textPrimary, size: 22),
+                child: Icon(
+                  Icons.ios_share_rounded,
+                  color: theme.textPrimary,
+                  size: 22,
+                ),
               ),
             ),
-            
+
             const SizedBox(width: 12),
 
             // View / Open File / Copy (Primary Action)
-            if (isFile || _editedItem.type == 'link' || _editedItem.type == 'note') ...[
+            if (isFile ||
+                _editedItem.type == 'link' ||
+                _editedItem.type == 'note') ...[
               Expanded(
                 child: SizedBox(
                   height: 56,
@@ -687,7 +785,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     onPressed: () {
                       HapticService.medium();
                       if (_editedItem.type == 'note') {
-                        Clipboard.setData(ClipboardData(text: _editedItem.content));
+                        Clipboard.setData(
+                          ClipboardData(text: _editedItem.content),
+                        );
                         VoidSnackBar.show(
                           context,
                           message: 'Copied to clipboard',
@@ -695,7 +795,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                         );
                       } else {
                         // Use imageUrl for images, otherwise content (files/links)
-                        String path = _editedItem.type == 'image' 
+                        String path = _editedItem.type == 'image'
                             ? (_editedItem.imageUrl ?? _editedItem.content)
                             : _editedItem.content;
                         _openFile(path);
@@ -713,16 +813,20 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          _editedItem.type == 'note' 
-                              ? Icons.copy_rounded 
-                              : (_editedItem.type == 'link' ? Icons.open_in_new_rounded : Icons.open_in_full_rounded),
+                          _editedItem.type == 'note'
+                              ? Icons.copy_rounded
+                              : (_editedItem.type == 'link'
+                                    ? Icons.open_in_new_rounded
+                                    : Icons.open_in_full_rounded),
                           size: 20,
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          _editedItem.type == 'note' 
-                              ? "Copy Text" 
-                              : (_editedItem.type == 'link' ? "Open Link" : "Open File"),
+                          _editedItem.type == 'note'
+                              ? "Copy Text"
+                              : (_editedItem.type == 'link'
+                                    ? "Open Link"
+                                    : "Open File"),
                           style: GoogleFonts.ibmPlexSans(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -751,13 +855,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   border: Border.all(color: theme.borderSubtle),
                 ),
                 child: Center(
-                  child: Icon(Icons.delete_outline_rounded, color: theme.textSecondary, size: 22),
+                  child: Icon(
+                    Icons.delete_outline_rounded,
+                    color: theme.textSecondary,
+                    size: 22,
+                  ),
                 ),
               ),
             ),
           ],
         ),
-        
+
         // Extra bottom padding for scrolling
         SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
       ],
@@ -767,13 +875,13 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   bool _shouldShowContentSection() {
     if (_editedItem.type == 'note') return true;
     if (_editedItem.content.isEmpty) return false;
-    
+
     // For images/files, if content is same as summary or tldr, it's redundant
     if (_editedItem.imageUrl != null) {
       if (_editedItem.content == _editedItem.summary) return false;
       if (_editedItem.content == _editedItem.tldr) return false;
     }
-    
+
     return true;
   }
 }
