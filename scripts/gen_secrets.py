@@ -12,9 +12,14 @@ Then copy the printed _T list into lib/app/secrets.dart.
 Do NOT commit the raw token anywhere.
 """
 
-import sys
+from __future__ import annotations
 
-KEY = [
+import sys
+from typing import List
+
+_USAGE: str = __doc__ or ""
+
+KEY: List[int] = [
     0x56, 0x4F, 0x49, 0x44, 0x5F, 0x53, 0x50, 0x41,
     0x43, 0x45, 0x5F, 0x4B, 0x45, 0x59, 0x5F, 0x32,
     0x30, 0x32, 0x35, 0x5F, 0x58, 0x44, 0x56, 0x5F,
@@ -22,38 +27,38 @@ KEY = [
 ]
 
 
-def encode(token: str) -> list[int]:
+def encode(token: str) -> List[int]:
     return [ord(c) ^ KEY[i % len(KEY)] for i, c in enumerate(token)]
 
 
-def decode(obf: list[int]) -> str:
-    return ''.join(chr(b ^ KEY[i % len(KEY)]) for i, b in enumerate(obf))
+def decode(obf: List[int]) -> str:
+    return "".join(chr(b ^ KEY[i % len(KEY)]) for i, b in enumerate(obf))
 
 
-def format_dart_list(obf: list[int]) -> str:
-    rows = []
+def format_dart_list(obf: List[int]) -> str:
+    rows: List[str] = []
     for i in range(0, len(obf), 8):
-        chunk = obf[i:i + 8]
-        rows.append('  ' + ', '.join(f'0x{b:02X}' for b in chunk) + ',')
-    return 'const List<int> _T = [\n' + '\n'.join(rows) + '\n];'
+        chunk: List[int] = obf[i : i + 8]
+        rows.append("  " + ", ".join(f"0x{b:02X}" for b in chunk) + ",")
+    return "const List<int> _T = [\n" + "\n".join(rows) + "\n];"
 
 
-def main():
+def main() -> None:
     if len(sys.argv) < 2:
-        print(__doc__)
+        print(_USAGE)
         sys.exit(1)
 
-    token = sys.argv[1].strip()
-    obf = encode(token)
+    token: str = sys.argv[1].strip()
+    obf: List[int] = encode(token)
 
-    # Verify round-trip
+    # Verify round-trip before printing anything
     assert decode(obf) == token, "Round-trip verification failed!"
 
     print(f"Token length : {len(token)}")
-    print(f"Round-trip   : OK\n")
+    print("Round-trip   : OK\n")
     print("─── Paste this into lib/app/secrets.dart ───\n")
     print(format_dart_list(obf))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
