@@ -238,7 +238,7 @@ class AboutScreen extends StatelessWidget {
                   child: SocialButton(
                       icon: Icons.business,
                       label: "LinkedIn",
-                      url: "https://linkedin.com",
+                      url: "https://linkedin.com/in/naveen-xd",
                       centerContent: true)),
               const SizedBox(width: 12),
               Expanded(
