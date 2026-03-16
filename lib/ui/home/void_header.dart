@@ -155,105 +155,101 @@ class VoidHeader extends StatelessWidget {
 
   Widget _buildTagsRow(BuildContext context) {
     final theme = VoidTheme.of(context);
-    return ListView.builder(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      itemCount: availableTags.length + 1,
-      itemBuilder: (context, index) {
-        if (index == 0) {
-          final isAllSelected = selectedTags.isEmpty;
-          return Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: GestureDetector(
-              onTap: onClearFilters,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: isAllSelected
-                      ? theme.textPrimary.withValues(alpha: 0.15)
-                      : theme.textPrimary.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(VoidDesign.radiusMD),
-                  border: Border.all(
-                    color: isAllSelected
-                        ? theme.textPrimary.withValues(alpha: 0.3)
-                        : theme.borderSubtle,
-                  ),
-                ),
-                child: Text(
-                  "All",
-                  style: GoogleFonts.ibmPlexSans(
-                    color: isAllSelected
-                        ? theme.textPrimary
-                        : theme.textTertiary,
-                    fontSize: 13,
-                    fontWeight: isAllSelected
-                        ? FontWeight.w600
-                        : FontWeight.w400,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }
+    // Use a SingleChildScrollView + Row to avoid gesture conflicts with
+    // the main vertical scroll view and ensure reliable horizontal drag.
+    final List<Widget> children = [];
 
-        final tag = availableTags[index - 1];
-        final isSelected = selectedTags.contains(tag);
-        final tagColor = getTagColor(tag);
-
-        return Padding(
-          padding: const EdgeInsets.only(right: 10),
-          child: GestureDetector(
-            onTap: () => onToggleTag(tag),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              // Adjusted padding to accommodate icon
-              padding: EdgeInsets.symmetric(
-                horizontal: isSelected ? 12 : 16,
-                vertical: 10,
-              ),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? tagColor.withValues(alpha: 0.15)
-                    : theme.textPrimary.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: isSelected
-                      ? tagColor.withValues(alpha: 0.4)
-                      : theme.textPrimary.withValues(alpha: 0.08),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    tag,
-                    style: GoogleFonts.ibmPlexSans(
-                      color: isSelected ? tagColor : theme.textTertiary,
-                      fontSize: 13,
-                      fontWeight: isSelected
-                          ? FontWeight.w600
-                          : FontWeight.w400,
-                    ),
-                  ),
-                  if (isSelected) ...[
-                    const SizedBox(width: 6),
-                    Icon(
-                      Icons.close_rounded,
-                      size: 14,
-                      color: tagColor.withValues(alpha: 0.8),
-                    ),
-                  ],
-                ],
-              ),
+    // "All" chip
+    final isAllSelected = selectedTags.isEmpty;
+    children.add(Padding(
+      padding: const EdgeInsets.only(right: 10),
+      child: GestureDetector(
+        onTap: onClearFilters,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: isAllSelected
+                ? theme.textPrimary.withValues(alpha: 0.15)
+                : theme.textPrimary.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(VoidDesign.radiusMD),
+            border: Border.all(
+              color: isAllSelected
+                  ? theme.textPrimary.withValues(alpha: 0.3)
+                  : theme.borderSubtle,
             ),
           ),
-        );
-      },
+          child: Text(
+            "All",
+            style: GoogleFonts.ibmPlexSans(
+              color: isAllSelected ? theme.textPrimary : theme.textTertiary,
+              fontSize: 13,
+              fontWeight: isAllSelected ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+        ),
+      ),
+    ));
+
+    for (final tag in availableTags) {
+      final isSelected = selectedTags.contains(tag);
+      final tagColor = getTagColor(tag);
+
+      children.add(Padding(
+        padding: const EdgeInsets.only(right: 10),
+        child: GestureDetector(
+          onTap: () => onToggleTag(tag),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: EdgeInsets.symmetric(
+              horizontal: isSelected ? 12 : 16,
+              vertical: 10,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? tagColor.withValues(alpha: 0.15)
+                  : theme.textPrimary.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: isSelected
+                    ? tagColor.withValues(alpha: 0.4)
+                    : theme.textPrimary.withValues(alpha: 0.08),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  tag,
+                  style: GoogleFonts.ibmPlexSans(
+                    color: isSelected ? tagColor : theme.textTertiary,
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+                ),
+                if (isSelected) ...[
+                  const SizedBox(width: 6),
+                  Icon(
+                    Icons.close_rounded,
+                    size: 14,
+                    color: tagColor.withValues(alpha: 0.8),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ));
+    }
+
+    return SizedBox(
+      height: 52,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        child: Row(children: children),
+      ),
     );
   }
 }
