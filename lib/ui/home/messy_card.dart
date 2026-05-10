@@ -56,7 +56,11 @@ class _MessyCardState extends State<MessyCard> with TickerProviderStateMixin {
     _breathingController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
-    )..repeat(reverse: true);
+    );
+    
+    if (widget.isSelected) {
+      _breathingController.repeat(reverse: true);
+    }
 
     _pulseAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _breathingController, curve: Curves.easeInOut),
@@ -73,8 +77,8 @@ class _MessyCardState extends State<MessyCard> with TickerProviderStateMixin {
       CurvedAnimation(parent: _entranceController, curve: Curves.easeOutCubic),
     );
     
-    // Staggered entrance delay based on index
-    Future.delayed(Duration(milliseconds: 50 * widget.index.clamp(0, 10)), () {
+    // Subtler entrance delay
+    Future.delayed(Duration(milliseconds: 30 * widget.index.clamp(0, 12)), () {
       if (mounted) _entranceController.forward();
     });
   }
@@ -305,8 +309,8 @@ class _MessyCardState extends State<MessyCard> with TickerProviderStateMixin {
           },
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            child: Container(
+              color: Colors.transparent,
               child: Stack(
                 children: [
                   // Subtle inner edge glow
