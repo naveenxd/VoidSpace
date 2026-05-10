@@ -249,6 +249,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                   ),
                 ),
                 const SizedBox(width: 20),
+*/
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -307,8 +308,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ],
                   ),
                 ),
-*/
-                const Expanded(child: SizedBox(height: 64)),
               ],
             ),
           ),

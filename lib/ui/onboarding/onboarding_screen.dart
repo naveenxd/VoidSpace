@@ -82,11 +82,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             color: color,
           ),
         ),
-/*
       OnboardingContent(
         isProfileSetup: true,
       ),
-*/
     ];
 
     _bgRotateController = AnimationController(
@@ -322,6 +320,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                /*
                 Transform.translate(
                   offset: Offset(0, -12 * (1 - entry)),
                   child: Opacity(
@@ -349,6 +348,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     ),
                   ),
                 ),
+                */
+                const SizedBox(height: 60),
                 const SizedBox(height: 48),
                 Builder(builder: (context) {
                   final subtitleEntry = Curves.easeOutCubic.transform((entry * 1.2 - 0.15).clamp(0.0, 1.0));
@@ -617,7 +618,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       animation: _nameController,
       builder: (context, child) {
         final isLast = _currentPage == _contents.length - 1;
-        final bool isProfileSetupReady = _nameController.text.trim().isNotEmpty && _profileImagePath != null;
+        final bool isProfileSetupReady = _nameController.text.trim().isNotEmpty;
         final bool isClickable = !isLast || isProfileSetupReady;
         final bool showSolid = isLast && isProfileSetupReady;
 
