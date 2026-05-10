@@ -39,10 +39,10 @@ class SummarySection extends StatelessWidget {
             Text(
               'SUMMARY',
               style: GoogleFonts.ibmPlexMono(
-                color: theme.textSecondary.withValues(alpha: theme.brightness == Brightness.dark ? 0.24 : 0.4),
-                fontSize: 10,
+                color: theme.textSecondary.withValues(alpha: theme.brightness == Brightness.dark ? 0.35 : 0.5),
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 2,
+                letterSpacing: 2.5,
               ),
             ),
             const Spacer(),
@@ -119,13 +119,14 @@ class SummarySection extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(
+                SelectableText(
                   item.tldr ?? '',
                   style: GoogleFonts.ibmPlexSans(
-                    color: theme.textPrimary.withValues(alpha: 0.9),
-                    fontSize: 16,
+                    color: theme.textPrimary.withValues(alpha: 0.95),
+                    fontSize: 17,
                     height: 1.6,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.2,
                   ),
                 ),
               ],
@@ -134,12 +135,13 @@ class SummarySection extends StatelessWidget {
           const SizedBox(height: 16),
         ],
         if (item.summary?.isNotEmpty ?? false)
-          Text(
+          SelectableText(
             item.summary ?? '',
             style: GoogleFonts.ibmPlexSans(
               color: theme.textSecondary,
-              fontSize: 15,
-              height: 1.7,
+              fontSize: 16,
+              height: 1.8,
+              letterSpacing: 0.1,
             ),
           ),
       ],

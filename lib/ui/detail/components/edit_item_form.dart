@@ -48,17 +48,18 @@ class EditItemForm extends StatelessWidget {
         const SizedBox(height: 12),
         TextField(
           controller: titleController,
-          style: GoogleFonts.ibmPlexMono(
+          style: GoogleFonts.ibmPlexSans(
             color: theme.textPrimary,
-            fontSize: 24,
+            fontSize: 28,
             fontWeight: FontWeight.bold,
+            height: 1.3,
           ),
           maxLines: null,
           decoration: InputDecoration(
             hintText: 'Enter title...',
-            hintStyle: GoogleFonts.ibmPlexMono(
+            hintStyle: GoogleFonts.ibmPlexSans(
               color: theme.textSecondary,
-              fontSize: 24,
+              fontSize: 28,
             ),
             filled: true,
             fillColor: theme.textPrimary.withValues(alpha: 0.05),
@@ -97,10 +98,11 @@ class EditItemForm extends StatelessWidget {
         const SizedBox(height: 12),
         TextField(
           controller: contentController,
-          style: GoogleFonts.ibmPlexMono(
+          style: GoogleFonts.ibmPlexSans(
             color: theme.textPrimary.withValues(alpha: 0.9),
             fontSize: 16,
-            height: 1.6,
+            height: 1.8,
+            letterSpacing: 0.1,
           ),
           maxLines: null,
           decoration: InputDecoration(

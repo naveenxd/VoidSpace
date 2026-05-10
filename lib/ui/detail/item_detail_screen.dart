@@ -532,14 +532,14 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                             isNoteType: _isNoteType,
                           )
                         else
-                          Text(
+                          SelectableText(
                             _editedItem.title,
                             style: GoogleFonts.ibmPlexSans(
                               color: theme.textPrimary,
-                              fontSize: 28,
+                              fontSize: 32,
                               fontWeight: FontWeight.bold,
-                              height: 1.2,
-                              letterSpacing: -0.5,
+                              height: 1.3,
+                              letterSpacing: -0.8,
                             ),
                           ),
 
@@ -763,12 +763,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             ),
             const SizedBox(width: 10),
             Text(
-              'CONTENT',
+              'DESCRIPTION',
               style: GoogleFonts.ibmPlexMono(
-                color: theme.textPrimary.withValues(alpha: 0.24),
-                fontSize: 10,
+                color: theme.textPrimary.withValues(alpha: 0.35),
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
-                letterSpacing: 2,
+                letterSpacing: 2.5,
               ),
             ),
           ],
@@ -782,12 +782,13 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: theme.borderSubtle),
           ),
-          child: Text(
+          child: SelectableText(
             _editedItem.content,
             style: GoogleFonts.ibmPlexSans(
               color: theme.textSecondary,
-              fontSize: 15,
-              height: 1.7,
+              fontSize: 16,
+              height: 1.8,
+              letterSpacing: 0.1,
             ),
           ),
         ),
