@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:image/image.dart' as img;
 
 import 'package:void_space/app/secrets.dart';
 import 'package:void_space/data/models/void_item.dart';
@@ -38,7 +39,7 @@ class VoidShareService {
     final slug = data['paste']['slug'];
 
     // 3. Return target URL
-    return '$_xDevHUrl/view?t=p&i=$slug';
+    return '$_xDevHUrl/#p/$slug';
   }
 
   /// Generates a PDF and saves it to a temporary local file, returning the File.
@@ -101,8 +102,17 @@ class VoidShareService {
         final file = File(item.imageUrl!);
         if (file.existsSync()) {
           final bytes = file.readAsBytesSync();
-          final base64Image = base64Encode(bytes);
-          imageHtml = '<img src="data:image/png;base64,$base64Image" style="max-width: 100%; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border);">';
+          
+          // Decode and compress
+          final image = img.decodeImage(bytes);
+          if (image != null) {
+            // Resize to a sensible web preview width (800px max)
+            final resized = img.copyResize(image, width: 800);
+            // Encode to JPEG with 70% quality to save space
+            final compressedBytes = img.encodeJpg(resized, quality: 70);
+            final base64Image = base64Encode(compressedBytes);
+            imageHtml = '<img src="data:image/jpeg;base64,$base64Image" style="max-width: 100%; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border);">';
+          }
         }
       } catch (_) {}
     }
