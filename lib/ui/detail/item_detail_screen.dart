@@ -784,8 +784,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   Widget _buildHeaderImageContent() {
     final theme = VoidTheme.of(context);
-    // Only attempt to render image if type is actually image
-    if (_editedItem.type == 'image' && _editedItem.imageUrl != null && _editedItem.imageUrl!.isNotEmpty) {
+    // Render image if available (supports both 'image' and 'link' types)
+    if ((_editedItem.type == 'image' || _editedItem.type == 'link') && _editedItem.imageUrl != null && _editedItem.imageUrl!.isNotEmpty) {
       return Container(
         decoration: BoxDecoration(color: theme.bgCard.withValues(alpha: 0.2)),
         child: isLocalPath(_editedItem.imageUrl!)
