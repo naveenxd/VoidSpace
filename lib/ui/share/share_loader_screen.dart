@@ -221,7 +221,7 @@ class _ShareLoaderScreenState extends State<ShareLoaderScreen> {
         title: filename,
         summary: '${itemType.toUpperCase()} • ${sizeMB}MB',
         tldr: null,
-        imageUrl: itemType == 'image' ? persistentFile.path : null,
+        imageUrl: persistentFile.path, // Store path for ALL file types
         createdAt: DateTime.now(),
         tags: [itemType, 'shared'],
         embedding: null,

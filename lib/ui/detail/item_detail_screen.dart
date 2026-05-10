@@ -233,9 +233,20 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  if (isFileType(_editedItem.type)) ...[
+                    _buildShareOption(
+                      icon: getIconForType(_editedItem.type),
+                      label: 'Original ${_editedItem.type.toUpperCase()}',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _shareOriginalFile();
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   _buildShareOption(
                     icon: Icons.picture_as_pdf_rounded,
-                    label: 'PDF Document',
+                    label: _editedItem.type == 'pdf' ? 'PDF Document (Text)' : 'PDF Document',
                     isLoading: isSharingPdf,
                     onTap: () async {
                       if (isSharingPdf || isSharingWebsite) return;
@@ -330,6 +341,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   Future<void> _shareAsPdf(BuildContext sheetContext) async {
     HapticService.light();
     try {
+      // If it's already a PDF, we might want to just share the original file, 
+      // but this menu option is specifically for generating a formatted PDF export.
       final pdfFile = await VoidShareService.generatePdfFile(_editedItem);
       HapticService.success();
       if (!mounted) return;
@@ -344,6 +357,25 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       Navigator.pop(sheetContext);
       VoidSnackBar.show(context, message: 'Failed to share: $e', isError: true);
     }
+  }
+
+  Future<void> _shareOriginalFile() async {
+    final path = _editedItem.imageUrl ?? _editedItem.content;
+    if (path.isEmpty || !isLocalPath(path)) {
+      VoidSnackBar.show(context, message: 'Original file not found', isError: true);
+      return;
+    }
+
+    final file = File(path);
+    if (!file.existsSync()) {
+      VoidSnackBar.show(context, message: 'Original file not found on disk', isError: true);
+      return;
+    }
+
+    HapticService.success();
+    await Share.shareXFiles([
+      XFile(file.path),
+    ], text: 'Shared from Void Space');
   }
 
   Future<void> _shareAsWebsite(BuildContext sheetContext) async {
@@ -666,7 +698,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   Widget _buildHeaderImageContent() {
     final theme = VoidTheme.of(context);
-    if (_editedItem.imageUrl != null && _editedItem.imageUrl!.isNotEmpty) {
+    // Only attempt to render image if type is actually image
+    if (_editedItem.type == 'image' && _editedItem.imageUrl != null && _editedItem.imageUrl!.isNotEmpty) {
       return Container(
         decoration: BoxDecoration(color: theme.bgCard.withValues(alpha: 0.2)),
         child: isLocalPath(_editedItem.imageUrl!)
@@ -790,8 +823,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                           icon: Icons.check_circle_outline_rounded,
                         );
                       } else {
-                        // Use imageUrl for images, otherwise content (files/links)
-                        String path = _editedItem.type == 'image'
+                        // Use imageUrl for all file types (it now stores the persistent path)
+                        String path = isFileType(_editedItem.type)
                             ? (_editedItem.imageUrl ?? _editedItem.content)
                             : _editedItem.content;
                         _openFile(path);

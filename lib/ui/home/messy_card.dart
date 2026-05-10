@@ -338,7 +338,7 @@ class _MessyCardState extends State<MessyCard> with TickerProviderStateMixin {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        if (widget.item.imageUrl != null && widget.item.imageUrl!.isNotEmpty)
+                        if ((widget.item.type == 'image' || widget.item.type == 'link') && widget.item.imageUrl != null && widget.item.imageUrl!.isNotEmpty)
                           Stack(
                             children: [
                               ClipRRect(
