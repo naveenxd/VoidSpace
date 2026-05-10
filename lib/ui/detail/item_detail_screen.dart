@@ -23,6 +23,7 @@ import 'package:void_space/ui/utils/type_helpers.dart';
 import 'package:void_space/ui/widgets/void_dialog.dart';
 import 'package:void_space/ui/widgets/void_snackbar.dart';
 import 'package:void_space/services/void_share_service.dart';
+import 'package:void_space/services/link_metadata_service.dart';
 
 // Components
 
@@ -474,6 +475,18 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     HapticService.medium();
 
     try {
+      String? newImageUrl = _editedItem.imageUrl;
+
+      // For links, re-fetch metadata to get updated image URL
+      if (_editedItem.type == 'link') {
+        try {
+          final freshMeta = await LinkMetadataService.fetch(_editedItem.content);
+          newImageUrl = freshMeta.imageUrl;
+        } catch (_) {
+          // Fallback to existing image if scraping fails
+        }
+      }
+
       final context = await AIService.analyze(
         _editedItem.title,
         _editedItem.content,
@@ -490,6 +503,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             : _editedItem.title, // Update title!
         summary: context.summary,
         tldr: context.tldr,
+        imageUrl: newImageUrl, // Update image URL
         // Update content for notes and images, preserve path/url for other files/links
         content: (_editedItem.type == 'note' || _editedItem.type == 'image')
             ? context.summary
