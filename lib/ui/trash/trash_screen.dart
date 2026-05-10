@@ -88,9 +88,9 @@ class _TrashScreenState extends State<TrashScreen> {
     HapticService.warning();
     final bool? confirm = await VoidDialog.show(
       context: context,
-      title: "EMPTY TRASH?",
+      title: "EMPTY TRASH BIN?",
       message:
-          "Are you sure? This will permanently delete ${_trashItems.length} items.",
+          "Are you sure? This will permanently delete ${_trashItems.length} items from limbo.",
       confirmText: "EMPTY",
     );
 
@@ -108,72 +108,122 @@ class _TrashScreenState extends State<TrashScreen> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Let gradient show through
+      backgroundColor: theme.bgPrimary,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: theme.bgPrimary.withValues(alpha: 0.95),
+        backgroundColor: theme.bgPrimary.withValues(alpha: 0.8),
         elevation: 0,
         scrolledUnderElevation: 0,
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
+        centerTitle: false,
+        titleSpacing: 24,
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'TRASH',
+              'TRASH BIN',
               style: GoogleFonts.ibmPlexMono(
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.w700,
-                letterSpacing: 1.5,
+                letterSpacing: 2.0,
                 color: theme.textPrimary,
+              ),
+            ),
+            Text(
+              'NODES IN LIMBO',
+              style: GoogleFonts.ibmPlexMono(
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.0,
+                color: theme.textTertiary,
               ),
             ),
           ],
         ),
         iconTheme: IconThemeData(color: theme.textPrimary),
-        actions: [
-          if (_trashItems.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: TextButton(
-                onPressed: _emptyTrash,
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.redAccent.withValues(alpha: 0.15),
-                  foregroundColor: Colors.redAccent,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                    side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.3)),
-                  ),
-                ),
-                child: Text(
-                  'Empty',
-                  style: GoogleFonts.inter(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 12,
-                    letterSpacing: 0.5,
-                  ),
-                ),
+      ),
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: const Alignment(0, -0.6),
+                radius: 1.5,
+                colors: isDark 
+                    ? [const Color(0xFF1A1A1A), const Color(0xFF0A0A0A)]
+                    : [const Color(0xFFF1F3F5), const Color(0xFFE9ECEF)],
               ),
+            ),
+            child: SafeArea(
+              bottom: false,
+              child: _isLoading
+                  ? Center(child: CircularProgressIndicator(color: theme.textSecondary, strokeWidth: 2))
+                  : _trashItems.isEmpty
+                  ? _buildEmptyState(theme, isDark)
+                  : _buildTrashGrid(theme, isDark),
+            ),
+          ),
+          
+          // Floating Bulk Action Bar
+          if (_trashItems.isNotEmpty && !_isLoading)
+            Positioned(
+              bottom: MediaQuery.of(context).padding.bottom + 24,
+              left: 24,
+              right: 24,
+              child: _buildBulkActionBar(theme, isDark),
             ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(0, -0.6),
-            radius: 1.5,
-            colors: isDark 
-                ? [const Color(0xFF1E1E1E), const Color(0xFF0A0A0A)]
-                : [const Color(0xFFF8F9FA), const Color(0xFFE9ECEF)],
+    );
+  }
+
+  Widget _buildBulkActionBar(VoidTheme theme, bool isDark) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        color: theme.bgCard,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: theme.borderSubtle),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: _isLoading
-              ? Center(child: CircularProgressIndicator(color: theme.textSecondary, strokeWidth: 2))
-              : _trashItems.isEmpty
-              ? _buildEmptyState(theme, isDark)
-              : _buildTrashGrid(theme, isDark),
-        ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline_rounded, color: theme.textTertiary, size: 20),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              '${_trashItems.length} items in limbo',
+              style: GoogleFonts.inter(
+                color: theme.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: _emptyTrash,
+            style: TextButton.styleFrom(
+              backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
+              foregroundColor: Colors.redAccent,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              'PURGE ALL',
+              style: GoogleFonts.ibmPlexMono(
+                fontWeight: FontWeight.w700,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -184,46 +234,33 @@ class _TrashScreenState extends State<TrashScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: isDark 
-                    ? [theme.textMuted.withValues(alpha: 0.2), theme.textMuted.withValues(alpha: 0.05)]
-                    : [theme.textMuted.withValues(alpha: 0.1), theme.textMuted.withValues(alpha: 0.02)],
-              ),
+              color: theme.textPrimary.withValues(alpha: 0.03),
               shape: BoxShape.circle,
-              boxShadow: [
-                 BoxShadow(
-                   color: theme.textMuted.withValues(alpha: isDark ? 0.1 : 0.05),
-                   blurRadius: 40,
-                   spreadRadius: 10,
-                 )
-              ]
             ),
             child: Icon(
-              Icons.auto_delete_outlined,
-              size: 56,
-              color: theme.textSecondary.withValues(alpha: 0.7),
+              Icons.auto_delete_rounded,
+              size: 64,
+              color: theme.textMuted.withValues(alpha: 0.3),
             ),
           ),
           const SizedBox(height: 32),
           Text(
-            "All clear.",
-            style: GoogleFonts.ibmPlexSans(
+            "VOID IS CLEAR",
+            style: GoogleFonts.ibmPlexMono(
               color: theme.textPrimary,
-              fontSize: 24,
+              fontSize: 20,
               fontWeight: FontWeight.w700,
-              letterSpacing: -0.5,
+              letterSpacing: 2.0,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
-            "Deleted items will rest here.",
+            "Limbo is currently empty.",
             style: GoogleFonts.inter(
               color: theme.textTertiary,
-              fontSize: 14,
+              fontSize: 15,
             ),
           ),
         ],
@@ -238,54 +275,64 @@ class _TrashScreenState extends State<TrashScreen> {
       backgroundColor: theme.bgCard,
       child: MasonryGridView.count(
         crossAxisCount: 2,
-        mainAxisSpacing: VoidDesign.spaceMD,
-        crossAxisSpacing: VoidDesign.spaceMD,
-        padding: const EdgeInsets.all(VoidDesign.pageHorizontal),
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 120),
         itemCount: _trashItems.length,
         itemBuilder: (context, index) {
           final item = _trashItems[index];
-
-          return Stack(
-            children: [
-              // Disable tapping on messycard in trash view
-              IgnorePointer(
-                child: Container(
-                  foregroundDecoration: BoxDecoration(
-                    color: isDark 
-                        ? Colors.black.withValues(alpha: 0.3)
-                        : Colors.white.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(VoidDesign.radiusMD),
-                    border: Border.all(
-                      color: theme.borderSubtle.withValues(alpha: 0.5),
-                      width: 1,
-                    ),
+          
+          return GestureDetector(
+            onTap: () => _showActionMenu(context, item, theme, isDark),
+            child: Opacity(
+              opacity: 0.7,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(VoidDesign.radiusMD),
+                  border: Border.all(
+                    color: theme.borderSubtle,
+                    style: BorderStyle.solid,
+                    width: 1,
                   ),
-                  child: Opacity(
-                    opacity: 0.6,
-                    child: MessyCard(
-                      key: ValueKey(item.id),
-                      item: item,
-                      index: index,
-                      onUpdate: () async {},
-                      onSelect: (_) {},
-                      searchFocusNode: _dummyFocusNode,
-                    ),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(VoidDesign.radiusMD),
+                  child: Stack(
+                    children: [
+                      IgnorePointer(
+                        child: MessyCard(
+                          key: ValueKey(item.id),
+                          item: item,
+                          index: index,
+                          onUpdate: () async {},
+                          onSelect: (_) {},
+                          searchFocusNode: _dummyFocusNode,
+                        ),
+                      ),
+                      Positioned(
+                        top: 12,
+                        right: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            'LIMBO',
+                            style: GoogleFonts.ibmPlexMono(
+                              color: Colors.white,
+                              fontSize: 8,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-              // Overlay actions
-              Positioned.fill(
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(VoidDesign.radiusMD),
-                    onTap: () {
-                      _showActionMenu(context, item, theme, isDark);
-                    },
-                  ),
-                ),
-              ),
-            ],
+            ),
           );
         },
       ),
@@ -327,8 +374,8 @@ class _TrashScreenState extends State<TrashScreen> {
                       isDark: isDark,
                       icon: Icons.restore_rounded,
                       iconColor: const Color(0xFF00F2AD),
-                      title: 'Restore to Void',
-                      subtitle: 'Move this item back to your main grid.',
+                      title: 'Restore Node',
+                      subtitle: 'Bring this item back to your active nodes.',
                       onTap: () {
                         Navigator.pop(context);
                         _restoreItem(item);
@@ -341,8 +388,8 @@ class _TrashScreenState extends State<TrashScreen> {
                       isDark: isDark,
                       icon: Icons.delete_forever_rounded,
                       iconColor: Colors.redAccent,
-                      title: 'Delete Permanently',
-                      subtitle: 'This action cannot be undone.',
+                      title: 'Purge Forever',
+                      subtitle: 'This node will be lost to the void.',
                       isDestructive: true,
                       onTap: () {
                         Navigator.pop(context);
