@@ -110,59 +110,51 @@ class _TrashScreenState extends State<TrashScreen> {
     return Scaffold(
       backgroundColor: Colors.transparent, // Let gradient show through
       extendBodyBehindAppBar: true,
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(kToolbarHeight),
-        child: ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20.0, sigmaY: 20.0),
-            child: AppBar(
-              backgroundColor: theme.bgPrimary.withValues(alpha: 0.6),
-              elevation: 0,
-              scrolledUnderElevation: 0,
-              title: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'TRASH',
-                    style: GoogleFonts.ibmPlexMono(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1.5,
-                      color: theme.textPrimary,
-                    ),
-                  ),
-                ],
+      appBar: AppBar(
+        backgroundColor: theme.bgPrimary.withValues(alpha: 0.95),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'TRASH',
+              style: GoogleFonts.ibmPlexMono(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.5,
+                color: theme.textPrimary,
               ),
-              iconTheme: IconThemeData(color: theme.textPrimary),
-              actions: [
-                if (_trashItems.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 16),
-                    child: TextButton(
-                      onPressed: _emptyTrash,
-                      style: TextButton.styleFrom(
-                        backgroundColor: Colors.redAccent.withValues(alpha: 0.15),
-                        foregroundColor: Colors.redAccent,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.3)),
-                        ),
-                      ),
-                      child: Text(
-                        'Empty',
-                        style: GoogleFonts.inter(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
             ),
-          ),
+          ],
         ),
+        iconTheme: IconThemeData(color: theme.textPrimary),
+        actions: [
+          if (_trashItems.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: TextButton(
+                onPressed: _emptyTrash,
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.redAccent.withValues(alpha: 0.15),
+                  foregroundColor: Colors.redAccent,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: Colors.redAccent.withValues(alpha: 0.3)),
+                  ),
+                ),
+                child: Text(
+                  'Empty',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -252,14 +244,6 @@ class _TrashScreenState extends State<TrashScreen> {
         itemCount: _trashItems.length,
         itemBuilder: (context, index) {
           final item = _trashItems[index];
-          
-          // Grayscale/Desaturation Matrix
-          const colorMatrix = <double>[
-            0.2126, 0.7152, 0.0722, 0, 0,
-            0.2126, 0.7152, 0.0722, 0, 0,
-            0.2126, 0.7152, 0.0722, 0, 0,
-            0,      0,      0,      1, 0,
-          ];
 
           return Stack(
             children: [
@@ -276,8 +260,8 @@ class _TrashScreenState extends State<TrashScreen> {
                       width: 1,
                     ),
                   ),
-                  child: ColorFiltered(
-                    colorFilter: const ColorFilter.matrix(colorMatrix),
+                  child: Opacity(
+                    opacity: 0.6,
                     child: MessyCard(
                       key: ValueKey(item.id),
                       item: item,
