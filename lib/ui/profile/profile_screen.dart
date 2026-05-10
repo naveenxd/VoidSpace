@@ -44,6 +44,8 @@ class _ProfileScreenState extends State<ProfileScreen>
   int _itemCount = 0;
   int _linkCount = 0;
   int _noteCount = 0;
+  int _imageCount = 0;
+  int _fileCount = 0;
   String _storageSize = "0 KB";
   
   String _displayName = PreferencesStore.userName;
@@ -98,6 +100,8 @@ class _ProfileScreenState extends State<ProfileScreen>
     final items = await VoidStore.all();
     final links = items.where((i) => i.type == 'link').length;
     final notes = items.where((i) => i.type == 'note').length;
+    final images = items.where((i) => i.type == 'image').length;
+    final files = items.where((i) => i.type == 'pdf' || i.type == 'file').length;
     final size = (items.length * 0.45).toStringAsFixed(1);
 
     if (!mounted) return;
@@ -106,6 +110,8 @@ class _ProfileScreenState extends State<ProfileScreen>
       _itemCount = items.length;
       _linkCount = links;
       _noteCount = notes;
+      _imageCount = images;
+      _fileCount = files;
       _storageSize = "$size KB";
       _displayName = PreferencesStore.userName;
       _profilePicPath = PreferencesStore.userProfilePicture;
@@ -732,67 +738,63 @@ class _ProfileScreenState extends State<ProfileScreen>
       builder: (context, _) {
         return Column(
           children: [
-            IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+            // 1. Main Data Core (Full Width)
+            GlassCard(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  theme.textPrimary.withValues(alpha: 0.08),
+                  theme.textPrimary.withValues(alpha: 0.02),
+                ],
+              ),
+              padding: EdgeInsets.zero,
+              child: Stack(
                 children: [
-                  // Main Data Core
-                  Expanded(
-                    flex: 6,
-                    child: GlassCard(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          theme.textPrimary.withValues(alpha: 0.08),
-                          theme.textPrimary.withValues(alpha: 0.02),
-                        ],
-                      ),
-                      padding: EdgeInsets.zero,
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: CustomPaint(
-                              painter: TechRingPainter(
-                                  _dataStreamController.value),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                _buildDataCoreHeader(),
-                                _buildItemCountDisplay(theme),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: TechRingPainter(_dataStreamController.value),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  // Right Modules
-                  Expanded(
-                    flex: 5,
+                  Padding(
+                    padding: const EdgeInsets.all(24),
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                            child: _buildStatModule("Links",
-                                _linkCount.toString(), Icons.link_rounded, Colors.cyanAccent, theme)),
-                        const SizedBox(height: 12),
-                        Expanded(
-                            child: _buildStatModule(
-                                "Notes",
-                                _noteCount.toString(),
-                                Icons.sticky_note_2_outlined,
-                                Colors.purpleAccent, theme)),
+                        _buildDataCoreHeader(),
+                        const SizedBox(height: 20),
+                        _buildItemCountDisplay(theme),
                       ],
                     ),
                   ),
                 ],
               ),
+            ),
+            const SizedBox(height: 12),
+            
+            // 2. 2x2 Grid of Modules
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatModule("Links", _linkCount.toString(), Icons.link_rounded, Colors.cyanAccent, theme),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatModule("Notes", _noteCount.toString(), Icons.sticky_note_2_outlined, Colors.purpleAccent, theme),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatModule("Images", _imageCount.toString(), Icons.image_outlined, Colors.orangeAccent, theme),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatModule("Files", _fileCount.toString(), Icons.insert_drive_file_outlined, Colors.greenAccent, theme),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             _buildStorageBar(theme),
