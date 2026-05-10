@@ -23,7 +23,7 @@ class CloudflareAIResult {
 /// Unified AI Service using Cloudflare Workers AI (Llama 3.2 Vision)
 /// Replaces GroqService - handles both text and image analysis
 class CloudflareAIService {
-  static const String _endpoint = 'https://void.naveenxd2580.workers.dev/';
+  static const String _endpoint = 'https://void.nxd2k26.workers.dev/';
   static const int _maxImageSize = 512; // Reduced for faster upload
   
   /// Compress image to reduce payload size (inline, no isolate)
