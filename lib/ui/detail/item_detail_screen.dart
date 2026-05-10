@@ -233,6 +233,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
+                  // 1. FILE MODE (Image, PDF File, generic File)
                   if (isFileType(_editedItem.type)) ...[
                     _buildShareOption(
                       icon: getIconForType(_editedItem.type),
@@ -244,30 +245,41 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ),
                     const SizedBox(height: 12),
                   ],
-                  if (_editedItem.type == 'note' || _editedItem.type == 'link') ...[
+
+                  // 2. LINK MODE
+                  if (_editedItem.type == 'link') ...[
                     _buildShareOption(
-                      icon: Icons.picture_as_pdf_rounded,
-                      label: _editedItem.type == 'pdf' ? 'PDF Document (Text)' : 'PDF Document',
-                      isLoading: isSharingPdf,
-                      onTap: () async {
-                        if (isSharingPdf || isSharingWebsite) return;
-                        setSheetState(() => isSharingPdf = true);
-                        await _shareAsPdf(sheetContext);
-                        if (context.mounted)
-                          setSheetState(() => isSharingPdf = false);
+                      icon: Icons.link_rounded,
+                      label: 'Share Original Link',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Share.share(_editedItem.content);
                       },
                     ),
                     const SizedBox(height: 12),
                     _buildShareOption(
-                      icon: Icons.public_rounded,
-                      label: 'Share as Website',
-                      isLoading: isSharingWebsite,
+                      icon: Icons.copy_all_rounded,
+                      label: 'Copy URL',
+                      onTap: () {
+                        Navigator.pop(context);
+                        Clipboard.setData(ClipboardData(text: _editedItem.content));
+                        VoidSnackBar.show(context, message: 'URL copied to clipboard');
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  // 3. DOCUMENT EXPORTS (Notes and Images)
+                  if (_editedItem.type == 'note' || _editedItem.type == 'image') ...[
+                    _buildShareOption(
+                      icon: Icons.picture_as_pdf_rounded,
+                      label: 'PDF Document',
+                      isLoading: isSharingPdf,
                       onTap: () async {
-                        if (isSharingPdf || isSharingWebsite) return;
-                        setSheetState(() => isSharingWebsite = true);
-                        await _shareAsWebsite(sheetContext);
-                        if (context.mounted)
-                          setSheetState(() => isSharingWebsite = false);
+                        if (isSharingPdf) return;
+                        setSheetState(() => isSharingPdf = true);
+                        await _shareAsPdf(sheetContext);
+                        if (context.mounted) setSheetState(() => isSharingPdf = false);
                       },
                     ),
                     const SizedBox(height: 12),
@@ -280,6 +292,22 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       },
                     ),
                     const SizedBox(height: 12),
+                  ],
+
+                  // 4. SHARED WEB PREVIEW (Notes, Links, and Images)
+                  if (_editedItem.type == 'note' || _editedItem.type == 'link' || _editedItem.type == 'image') ...[
+                    _buildShareOption(
+                      icon: Icons.public_rounded,
+                      label: 'Share as Website',
+                      isLoading: isSharingWebsite,
+                      onTap: () async {
+                        if (isSharingWebsite) return;
+                        setSheetState(() => isSharingWebsite = true);
+                        await _shareAsWebsite(sheetContext);
+                        if (context.mounted) setSheetState(() => isSharingWebsite = false);
+                      },
+                    ),
+                    const SizedBox(height: 12),
                     _buildShareOption(
                       icon: Icons.text_fields_rounded,
                       label: 'Rich Text Message',
@@ -289,6 +317,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       },
                     ),
                   ],
+
                   SizedBox(height: MediaQuery.of(context).padding.bottom),
                 ],
               ),

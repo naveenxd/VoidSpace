@@ -95,13 +95,25 @@ class VoidShareService {
         .map((tag) => '<span class="tag">#${htmlEscape(tag)}</span>')
         .join(' ');
 
+    String imageHtml = '';
+    if (item.type == 'image' && item.imageUrl != null) {
+      try {
+        final file = File(item.imageUrl!);
+        if (file.existsSync()) {
+          final bytes = file.readAsBytesSync();
+          final base64Image = base64Encode(bytes);
+          imageHtml = '<img src="data:image/png;base64,$base64Image" style="max-width: 100%; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border);">';
+        }
+      } catch (_) {}
+    }
+
     return '''
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>\$title - Void Space</title>
+  <title>$title - Void Space</title>
   <style>
     :root {
       --bg: #0A0A0A;
@@ -192,6 +204,8 @@ class VoidShareService {
       </div>
     </div>
     
+    $imageHtml
+
     ${summary.isNotEmpty ? '<div class="summary-box">$summary</div>' : ''}
     
     <div class="content-box">
@@ -218,6 +232,16 @@ class VoidShareService {
 
   static Future<Uint8List> _generatePdf(VoidItem item) async {
     final doc = pw.Document();
+
+    pw.MemoryImage? pdfImage;
+    if (item.type == 'image' && item.imageUrl != null) {
+      try {
+        final file = File(item.imageUrl!);
+        if (file.existsSync()) {
+          pdfImage = pw.MemoryImage(file.readAsBytesSync());
+        }
+      } catch (_) {}
+    }
 
     doc.addPage(
       pw.MultiPage(
@@ -263,6 +287,15 @@ class VoidShareService {
                     .toList(),
               ),
             pw.SizedBox(height: 20),
+
+            if (pdfImage != null) ...[
+              pw.Container(
+                height: 300,
+                child: pw.Image(pdfImage, fit: pw.BoxFit.contain),
+              ),
+              pw.SizedBox(height: 20),
+            ],
+
             if (item.summary != null && item.summary!.isNotEmpty) ...[
               pw.Text(
                 'Summary',
