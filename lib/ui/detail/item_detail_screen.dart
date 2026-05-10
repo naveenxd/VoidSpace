@@ -244,49 +244,51 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ),
                     const SizedBox(height: 12),
                   ],
-                  _buildShareOption(
-                    icon: Icons.picture_as_pdf_rounded,
-                    label: _editedItem.type == 'pdf' ? 'PDF Document (Text)' : 'PDF Document',
-                    isLoading: isSharingPdf,
-                    onTap: () async {
-                      if (isSharingPdf || isSharingWebsite) return;
-                      setSheetState(() => isSharingPdf = true);
-                      await _shareAsPdf(sheetContext);
-                      if (context.mounted)
-                        setSheetState(() => isSharingPdf = false);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildShareOption(
-                    icon: Icons.public_rounded,
-                    label: 'Share as Website',
-                    isLoading: isSharingWebsite,
-                    onTap: () async {
-                      if (isSharingPdf || isSharingWebsite) return;
-                      setSheetState(() => isSharingWebsite = true);
-                      await _shareAsWebsite(sheetContext);
-                      if (context.mounted)
-                        setSheetState(() => isSharingWebsite = false);
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildShareOption(
-                    icon: Icons.description_outlined,
-                    label: 'Markdown Document (.md)',
-                    onTap: () {
-                      Navigator.pop(context);
-                      _shareAsMarkdown();
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  _buildShareOption(
-                    icon: Icons.text_fields_rounded,
-                    label: 'Rich Text Message',
-                    onTap: () {
-                      Navigator.pop(context);
-                      _shareAsText();
-                    },
-                  ),
+                  if (_editedItem.type == 'note' || _editedItem.type == 'link') ...[
+                    _buildShareOption(
+                      icon: Icons.picture_as_pdf_rounded,
+                      label: _editedItem.type == 'pdf' ? 'PDF Document (Text)' : 'PDF Document',
+                      isLoading: isSharingPdf,
+                      onTap: () async {
+                        if (isSharingPdf || isSharingWebsite) return;
+                        setSheetState(() => isSharingPdf = true);
+                        await _shareAsPdf(sheetContext);
+                        if (context.mounted)
+                          setSheetState(() => isSharingPdf = false);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildShareOption(
+                      icon: Icons.public_rounded,
+                      label: 'Share as Website',
+                      isLoading: isSharingWebsite,
+                      onTap: () async {
+                        if (isSharingPdf || isSharingWebsite) return;
+                        setSheetState(() => isSharingWebsite = true);
+                        await _shareAsWebsite(sheetContext);
+                        if (context.mounted)
+                          setSheetState(() => isSharingWebsite = false);
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildShareOption(
+                      icon: Icons.description_outlined,
+                      label: 'Markdown Document (.md)',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _shareAsMarkdown();
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    _buildShareOption(
+                      icon: Icons.text_fields_rounded,
+                      label: 'Rich Text Message',
+                      onTap: () {
+                        Navigator.pop(context);
+                        _shareAsText();
+                      },
+                    ),
+                  ],
                   SizedBox(height: MediaQuery.of(context).padding.bottom),
                 ],
               ),
