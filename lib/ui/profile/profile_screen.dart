@@ -13,7 +13,7 @@ import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'about_screen.dart';
+// import 'about_screen.dart';
 import '../../data/stores/void_store.dart';
 import '../../data/stores/preferences_store.dart';
 import '../../data/models/void_item.dart';
@@ -173,10 +173,12 @@ class _ProfileScreenState extends State<ProfileScreen>
                   _buildSectionTitle("DANGER ZONE", theme),
                   const SizedBox(height: 12),
                   _buildDangerSection(theme),
+                  /*
                   const SizedBox(height: 32),
                   _buildSectionTitle("SYSTEM", theme),
                   const SizedBox(height: 12),
                   _buildAboutSection(theme),
+                  */
                   const SizedBox(height: 48),
                   _buildVersionFooter(theme),
                 ],
@@ -697,6 +699,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
+/*
   Widget _buildAboutSection(VoidTheme theme) {
     return GlassCard(
       child: ActionTile(
@@ -713,6 +716,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       ),
     );
   }
+*/
 
   Widget _buildStatsSection(VoidTheme theme) {
     if (_itemCount == 0) {
