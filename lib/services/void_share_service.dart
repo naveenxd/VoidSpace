@@ -13,7 +13,7 @@ import 'package:void_space/data/models/void_item.dart';
 class VoidShareService {
   static const _xDevHUrl = 'https://x.devh.in';
 
-  /// Posts an HTML to the paste endpoint, returns the URL.
+  /// Generates a public URL for the item by posting HTML to a paste service.
   static Future<String> shareAsWebsite(VoidItem item) async {
     // 1. Generate HTML
     final String html = _generateHtml(item);
@@ -51,6 +51,33 @@ class VoidShareService {
     final file = File('${tempDir.path}/void_space_export_${item.id}.pdf');
     await file.writeAsBytes(pdfBytes);
 
+    return file;
+  }
+
+  /// Generates a Markdown file and saves it locally.
+  static Future<File> generateMarkdownFile(VoidItem item) async {
+    final StringBuffer buf = StringBuffer();
+    buf.writeln('# ${item.title}');
+    buf.writeln('\n**Type:** ${item.type.toUpperCase()}');
+    
+    if (item.tags.isNotEmpty) {
+      buf.writeln('**Tags:** ${item.tags.map((t) => "#$t").join(" ")}');
+    }
+    
+    if (item.summary != null && item.summary!.isNotEmpty) {
+      buf.writeln('\n## Summary');
+      buf.writeln(item.summary);
+    }
+    
+    buf.writeln('\n## Content');
+    buf.writeln(item.content);
+    
+    buf.writeln('\n---');
+    buf.writeln('_Generated via VoidSpace_');
+
+    final tempDir = await getTemporaryDirectory();
+    final file = File('${tempDir.path}/void_export_${item.id}.md');
+    await file.writeAsString(buf.toString());
     return file;
   }
 

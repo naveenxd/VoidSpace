@@ -271,8 +271,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   ),
                   const SizedBox(height: 12),
                   _buildShareOption(
+                    icon: Icons.description_outlined,
+                    label: 'Markdown Document (.md)',
+                    onTap: () {
+                      Navigator.pop(context);
+                      _shareAsMarkdown();
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildShareOption(
                     icon: Icons.text_fields_rounded,
-                    label: 'Plain Text',
+                    label: 'Rich Text Message',
                     onTap: () {
                       Navigator.pop(context);
                       _shareAsText();
@@ -395,15 +404,37 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     }
   }
 
-  Future<void> _shareAsText() async {
-    final String shareText = '${_editedItem.title}\n\n${_editedItem.content}';
-    if (_editedItem.type == 'link') {
-      // ignore: deprecated_member_use
-      await Share.share('${_editedItem.title}\n${_editedItem.content}');
-    } else {
-      // ignore: deprecated_member_use
-      await Share.share(shareText);
+  // Export functionality
+  Future<void> _shareAsMarkdown() async {
+    HapticService.light();
+    try {
+      final mdFile = await VoidShareService.generateMarkdownFile(_editedItem);
+      HapticService.success();
+      await Share.shareXFiles([XFile(mdFile.path)], text: 'Exported from Void Space');
+    } catch (e) {
+      VoidSnackBar.show(context, message: 'Failed to share markdown: $e', isError: true);
     }
+  }
+
+  Future<void> _shareAsText() async {
+    final StringBuffer sb = StringBuffer();
+    sb.writeln(_editedItem.title.toUpperCase());
+    
+    if (_editedTags.isNotEmpty) {
+      sb.writeln(_editedTags.map((t) => "#$t").join(" "));
+    }
+    
+    if (_editedItem.summary != null && _editedItem.summary!.isNotEmpty) {
+      sb.writeln('\n[SUMMARY]');
+      sb.writeln(_editedItem.summary);
+    }
+    
+    sb.writeln('\n[CONTENT]');
+    sb.writeln(_editedItem.content);
+    
+    sb.writeln('\nShared from Void Space');
+
+    await Share.share(sb.toString(), subject: _editedItem.title);
   }
 
   Future<void> _generateAIContext() async {
