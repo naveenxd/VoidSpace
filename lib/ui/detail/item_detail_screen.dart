@@ -947,7 +947,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                               ? Icons.copy_rounded
                               : (_editedItem.type == 'link'
                                     ? Icons.open_in_new_rounded
-                                    : Icons.open_in_full_rounded),
+                                    : (_editedItem.type == 'image'
+                                        ? Icons.visibility_rounded
+                                        : Icons.open_in_full_rounded)),
                           size: 20,
                         ),
                         const SizedBox(width: 8),
@@ -956,7 +958,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                               ? "Copy Text"
                               : (_editedItem.type == 'link'
                                     ? "Open Link"
-                                    : "Open File"),
+                                    : (_editedItem.type == 'image'
+                                        ? "Open Image"
+                                        : "Open File")),
                           style: GoogleFonts.ibmPlexSans(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
