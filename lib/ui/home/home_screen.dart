@@ -93,9 +93,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
               backgroundColor: theme.bgPrimary,
               resizeToAvoidBottomInset: false,
               drawerEnableOpenDragGesture: true,
-              // Limit drag width so horizontal gestures (e.g. tag scrolling)
-              // are not intercepted by the drawer. Kept reasonably wide.
-              drawerEdgeDragWidth: 28.0,
+              drawerEdgeDragWidth: MediaQuery.of(context).size.width * 0.6,
               drawer: VoidDrawer(
                 onReturnFromTrash: () {
                   controller.refresh();
