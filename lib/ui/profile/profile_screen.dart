@@ -220,7 +220,6 @@ class _ProfileScreenState extends State<ProfileScreen>
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-/*
                 Hero(
                   tag: 'profile_icon_hero',
                   child: GestureDetector(
@@ -239,19 +238,20 @@ class _ProfileScreenState extends State<ProfileScreen>
                         shape: BoxShape.circle,
                         color: theme.textPrimary.withValues(alpha: 0.1),
                         border: Border.all(color: theme.textPrimary.withValues(alpha: 0.1)),
-                        image: _profilePicPath != null
+                        image: (_profilePicPath != null && File(_profilePicPath!).existsSync())
                             ? DecorationImage(
                                 image: FileImage(File(_profilePicPath!)),
                                 fit: BoxFit.cover,
                               )
                             : null,
                       ),
-                      child: _profilePicPath == null ? Icon(Icons.person_rounded, size: 32, color: theme.textSecondary) : null,
+                      child: (_profilePicPath == null || !File(_profilePicPath!).existsSync()) 
+                          ? Icon(Icons.person_rounded, size: 32, color: theme.textSecondary) 
+                          : null,
                     ),
                   ),
                 ),
                 const SizedBox(width: 20),
-*/
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

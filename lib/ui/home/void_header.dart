@@ -121,14 +121,14 @@ class VoidHeader extends StatelessWidget {
                                 border: Border.all(
                                   color: theme.textPrimary.withValues(alpha: 0.1),
                                 ),
-                                image: currentProfilePicPath != null
+                                image: (currentProfilePicPath != null && File(currentProfilePicPath).existsSync())
                                     ? DecorationImage(
                                         image: FileImage(File(currentProfilePicPath)),
                                         fit: BoxFit.cover,
                                       )
                                     : null,
                               ),
-                              child: currentProfilePicPath == null
+                              child: (currentProfilePicPath == null || !File(currentProfilePicPath).existsSync())
                                   ? Icon(
                                       Icons.person,
                                       size: 18,
