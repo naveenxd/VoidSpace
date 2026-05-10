@@ -65,13 +65,19 @@ class VoidShareService {
       buf.writeln('**Tags:** ${item.tags.map((t) => "#$t").join(" ")}');
     }
     
+    if (item.tldr != null && item.tldr!.isNotEmpty) {
+      buf.writeln('\n> **TL;DR:** ${item.tldr}');
+    }
+
     if (item.summary != null && item.summary!.isNotEmpty) {
       buf.writeln('\n## Summary');
       buf.writeln(item.summary);
     }
     
-    buf.writeln('\n## Content');
-    buf.writeln(item.content);
+    if (item.content.isNotEmpty && item.content != item.summary) {
+      buf.writeln('\n## Content');
+      buf.writeln(item.content);
+    }
     
     buf.writeln('\n---');
     buf.writeln('_Generated via VoidSpace_');
@@ -88,9 +94,9 @@ class VoidShareService {
     final String contentLines = htmlEscape(
       item.content,
     ).replaceAll('\n', '<br>');
-    final String summary = item.summary != null
-        ? htmlEscape(item.summary!)
-        : '';
+    final String summary = item.summary != null ? htmlEscape(item.summary!) : '';
+    final String tldr = item.tldr != null ? htmlEscape(item.tldr!) : '';
+    final bool showContent = item.content.isNotEmpty && item.content != item.summary;
 
     final tagsHtml = item.tags
         .map((tag) => '<span class="tag">#${htmlEscape(tag)}</span>')
@@ -216,11 +222,11 @@ class VoidShareService {
     
     $imageHtml
 
+    ${tldr.isNotEmpty ? '<div class="summary-box" style="border-left-color: var(--text); color: var(--text); font-weight: 500;"><strong>TL;DR:</strong> $tldr</div>' : ''}
+
     ${summary.isNotEmpty ? '<div class="summary-box">$summary</div>' : ''}
     
-    <div class="content-box">
-      $contentLines
-    </div>
+    ${showContent ? '<div class="content-box">$contentLines</div>' : ''}
 
     <div class="footer">
       Shared from VoidSpace
@@ -306,6 +312,31 @@ class VoidShareService {
               pw.SizedBox(height: 20),
             ],
 
+            if (item.tldr != null && item.tldr!.isNotEmpty) ...[
+              pw.Container(
+                padding: const pw.EdgeInsets.all(12),
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.grey100,
+                  borderRadius: const pw.BorderRadius.all(pw.Radius.circular(8)),
+                ),
+                child: pw.RichText(
+                  text: pw.TextSpan(
+                    children: [
+                      pw.TextSpan(
+                        text: 'TL;DR: ',
+                        style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 11),
+                      ),
+                      pw.TextSpan(
+                        text: item.tldr!,
+                        style: const pw.TextStyle(fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              pw.SizedBox(height: 20),
+            ],
+
             if (item.summary != null && item.summary!.isNotEmpty) ...[
               pw.Text(
                 'Summary',
@@ -326,19 +357,22 @@ class VoidShareService {
               ),
               pw.SizedBox(height: 20),
             ],
-            pw.Text(
-              'Content',
-              style: pw.TextStyle(
-                fontSize: 14,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.grey700,
+
+            if (item.content.isNotEmpty && item.content != item.summary) ...[
+              pw.Text(
+                'Content',
+                style: pw.TextStyle(
+                  fontSize: 14,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.grey700,
+                ),
               ),
-            ),
-            pw.SizedBox(height: 8),
-            pw.Text(
-              item.content,
-              style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
-            ),
+              pw.SizedBox(height: 8),
+              pw.Text(
+                item.content,
+                style: const pw.TextStyle(fontSize: 12, lineSpacing: 1.5),
+              ),
+            ],
           ];
         },
         footer: (context) {
