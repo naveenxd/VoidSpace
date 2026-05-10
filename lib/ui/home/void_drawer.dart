@@ -89,6 +89,7 @@ class VoidDrawer extends StatelessWidget {
               ),
             ),
 
+            /*
             _buildSectionHeader("ORGANIZATION", theme),
 
             _buildDrawerItem(
@@ -116,6 +117,7 @@ class VoidDrawer extends StatelessWidget {
                 Navigator.pop(context);
               },
             ),
+            */
 
             const Spacer(),
 
