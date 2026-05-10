@@ -214,24 +214,28 @@ Respond ONLY with valid JSON:
             final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(cleanNested);
             if (jsonMatch != null) {
               try {
-                // Clean up possible escaped quotes or other common issues in AI-generated JSON strings
                 String jsonStr = jsonMatch.group(0)!;
-                // If it's a double-encoded JSON string, we might need to unescape it
+                
+                // 1. Handle escaped JSON strings (common in Cloudflare Worker responses)
                 if (jsonStr.contains('\\"')) {
                   try {
-                    // Try to parse it as a string first to unescape
+                    // Try to decode as a double-quoted string to unescape it
                     final unescaped = jsonDecode('"$jsonStr"');
                     if (unescaped is String) jsonStr = unescaped;
                   } catch (_) {}
                 }
                 
-                final parsed = jsonDecode(jsonStr);
+                // 2. Pre-clean common AI JSON mishaps (trailing commas, missing quotes)
+                // This is a basic attempt to make it valid JSON
+                String normalizedJson = jsonStr.trim();
+                
+                final parsed = jsonDecode(normalizedJson);
                 title = _cleanValue(parsed['title']);
                 description = _cleanValue(parsed['summary'] ?? parsed['description']);
                 tldr = _cleanValue(parsed['tldr']);
                 tags = (parsed['tags'] as List?)?.map((e) => _cleanValue(e)).where((e) => e.isNotEmpty).toList() ?? tags;
               } catch (e) {
-                debugPrint('CloudflareAI: JSON block found but failed to decode: $e');
+                debugPrint('CloudflareAI: JSON decode failed ($e). Falling back to label extraction.');
               }
             }
             
@@ -256,6 +260,11 @@ Respond ONLY with valid JSON:
           }
         }
       }
+      
+      // Post-parse cleanup: Ensure title doesn't contain field labels
+      title = _stripLabels(title);
+      description = _stripLabels(description);
+      tldr = _stripLabels(tldr);
       if (description.isEmpty && title.isEmpty) {
         debugPrint('CloudflareAI Error: Empty response from API. Body: ${response.body}');
         return null;
@@ -302,6 +311,15 @@ Respond ONLY with valid JSON:
       str = str.substring(1, str.length - 1);
     }
     return str.replaceAll('**', '').trim();
+  }
+
+  static String _stripLabels(String text) {
+    if (text.isEmpty) return text;
+    // Remove common field labels and JSON keys from the start of the string
+    // e.g., "title": "...", summary: ..., **TLDR**: ...
+    return text.replaceFirst(RegExp(r'^(?:"|\[|\s)*?(?:title|summary|description|tldr|analysis|content)(?:"|\]|\s)*?[:\-:=]*\s*', caseSensitive: false), '')
+               .replaceAll(RegExp(r'^"|"$'), '') // Strip leading/trailing quotes one more time
+               .trim();
   }
 
   static String? _extractLabel(String text, String label) {
