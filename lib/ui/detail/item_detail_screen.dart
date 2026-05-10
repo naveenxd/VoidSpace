@@ -598,10 +598,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                       */
 
                         // Actions (View, Share, Delete) - Only visible when not editing
-                        if (!_isEditMode) ...[
-                          const SizedBox(height: 24), // Reduced from 60
-                          _buildBottomActions(context),
-                        ],
+                        // Removed fixed bottom actions from here to move them to a sticky bottom position
+                        const SizedBox(height: 120), // Bottom spacer to ensure content can scroll past fixed actions
                       ],
                     ),
                   ),
@@ -691,6 +689,32 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               ),
             ),
           ),
+
+          // 3. Persistent Bottom Actions (Only when not editing)
+          if (!_isEditMode)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: ClipRRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                    decoration: BoxDecoration(
+                      color: theme.bgPrimary.withValues(alpha: 0.8),
+                      border: Border(
+                        top: BorderSide(
+                          color: theme.textPrimary.withValues(alpha: 0.08),
+                          width: 0.5,
+                        ),
+                      ),
+                    ),
+                    child: _buildBottomActions(context),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -894,8 +918,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             ),
           ],
         ),
-
-        // Extra bottom padding for scrolling
         SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
       ],
     );
