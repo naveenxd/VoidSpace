@@ -109,13 +109,21 @@ class VoidShareService {
         if (file.existsSync()) {
           final bytes = file.readAsBytesSync();
           
-          // Decode and compress
           final image = img.decodeImage(bytes);
           if (image != null) {
-            // Resize to a sensible web preview width (800px max)
-            final resized = img.copyResize(image, width: 800);
-            // Encode to JPEG with 70% quality to save space
-            final compressedBytes = img.encodeJpg(resized, quality: 70);
+            // Aggressive compression for web preview to stay under 200KB limit
+            // 600px width is plenty for a quick preview
+            var resized = img.copyResize(image, width: 600);
+            
+            // Encode with lower quality (50%) to ensure it fits the strict 200KB paste limit
+            var compressedBytes = img.encodeJpg(resized, quality: 50);
+            
+            // If still too large (rare at 600px/50%), drop to 400px
+            if (compressedBytes.length > 140 * 1024) {
+              resized = img.copyResize(image, width: 400);
+              compressedBytes = img.encodeJpg(resized, quality: 40);
+            }
+
             final base64Image = base64Encode(compressedBytes);
             imageHtml = '<img src="data:image/jpeg;base64,$base64Image" style="max-width: 100%; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border);">';
           }
