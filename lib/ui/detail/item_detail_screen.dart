@@ -428,8 +428,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
             : _editedItem.title, // Update title!
         summary: context.summary,
         tldr: context.tldr,
-        // Only update content for notes, preserve path/url for files/links
-        content: _editedItem.type == 'note'
+        // Update content for notes and images, preserve path/url for other files/links
+        content: (_editedItem.type == 'note' || _editedItem.type == 'image')
             ? context.summary
             : _editedItem.content,
         tags: context.tags, // Refresh tags as well

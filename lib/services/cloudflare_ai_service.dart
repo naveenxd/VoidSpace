@@ -208,30 +208,40 @@ Respond ONLY with valid JSON:
             tldr = nested['tldr'] as String? ?? tldr;
             tags = (nested['tags'] as List?)?.map((e) => e.toString()).toList() ?? tags;
           } else if (nested is String) {
-            try {
-              // Extract JSON from string if AI added conversational filler
-              final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(nested);
-              if (jsonMatch != null) {
+            String cleanNested = nested.trim();
+            
+            // Try to find JSON block first
+            final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(cleanNested);
+            if (jsonMatch != null) {
+              try {
                 final parsed = jsonDecode(jsonMatch.group(0)!);
                 title = parsed['title'] as String? ?? title;
                 description = parsed['summary'] as String? ?? parsed['description'] as String? ?? description;
                 tldr = parsed['tldr'] as String? ?? tldr;
                 tags = (parsed['tags'] as List?)?.map((e) => e.toString()).toList() ?? tags;
-              } else {
-                // FALLBACK: Parse as Markdown-style list if no JSON found
-                title = _extractLabel(nested, 'TITLE') ?? title;
-                description = _extractLabel(nested, 'SUMMARY') ?? 
-                             _extractLabel(nested, 'DESCRIPTION') ?? 
-                             _extractLabel(nested, 'DESC') ?? nested;
-                tldr = _extractLabel(nested, 'TLDR') ?? tldr;
-                
-                final tagsStr = _extractLabel(nested, 'TAGS');
-                if (tagsStr != null) {
-                  tags = tagsStr.split(RegExp(r'[,#]')).map((e) => e.trim().replaceAll('#', '')).where((e) => e.isNotEmpty).toList();
-                }
+              } catch (e) {
+                debugPrint('CloudflareAI: JSON block found but failed to decode: $e');
               }
-            } catch (_) {
-              if (description.isEmpty) description = nested;
+            }
+            
+            // If we still don't have a description, try label extraction
+            if (description.isEmpty) {
+              title = _extractLabel(cleanNested, 'TITLE') ?? title;
+              description = _extractLabel(cleanNested, 'SUMMARY') ?? 
+                           _extractLabel(cleanNested, 'DESCRIPTION') ?? 
+                           _extractLabel(cleanNested, 'DESC') ?? '';
+              tldr = _extractLabel(cleanNested, 'TLDR') ?? tldr;
+              
+              final tagsStr = _extractLabel(cleanNested, 'TAGS');
+              if (tagsStr != null) {
+                tags = tagsStr.split(RegExp(r'[,#]')).map((e) => e.trim().replaceAll('#', '')).where((e) => e.isNotEmpty).toList();
+              }
+              
+              // Only if we REALLY have nothing, use the whole string but cleaned of tags/labels
+              if (description.isEmpty) {
+                // Remove common labels from the start if the AI returned a clean paragraph but prefixed it
+                description = cleanNested.replaceFirst(RegExp(r'^(?i)(summary|description|analysis):\s*'), '');
+              }
             }
           }
         }
@@ -279,7 +289,7 @@ Respond ONLY with valid JSON:
     );
     final match = regExp.firstMatch(text);
     if (match != null && match.groupCount >= 1) {
-      return match.group(1)?.trim();
+      return match.group(1)?.replaceAll('**', '').trim();
     }
     return null;
   }
