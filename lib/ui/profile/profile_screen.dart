@@ -218,6 +218,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
+/*
                 Hero(
                   tag: 'profile_icon_hero',
                   child: GestureDetector(
@@ -306,6 +307,8 @@ class _ProfileScreenState extends State<ProfileScreen>
                     ],
                   ),
                 ),
+*/
+                const Expanded(child: SizedBox(height: 64)),
               ],
             ),
           ),

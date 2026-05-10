@@ -82,9 +82,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             color: color,
           ),
         ),
+/*
       OnboardingContent(
         isProfileSetup: true,
       ),
+*/
     ];
 
     _bgRotateController = AnimationController(
