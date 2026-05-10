@@ -131,7 +131,6 @@ class _ProfileScreenState extends State<ProfileScreen>
       backgroundColor: theme.bgPrimary,
       body: Stack(
         children: [
-          // 1. Animated Data Stream Background
           AnimatedBuilder(
             animation: _dataStreamController,
             builder: (context, child) {
@@ -329,7 +328,10 @@ class _ProfileScreenState extends State<ProfileScreen>
                 iconColor: themeProvider.isDarkMode ? Colors.purpleAccent : Colors.orangeAccent,
                 title: 'Dark Mode',
                 value: themeProvider.isDarkMode,
-                onChanged: (_) => themeProvider.toggleTheme(),
+                onChanged: (val) {
+                  HapticService.selection();
+                  themeProvider.toggleTheme();
+                },
               );
             },
           ),
@@ -341,13 +343,17 @@ class _ProfileScreenState extends State<ProfileScreen>
   Widget _buildSecuritySection(VoidTheme theme) {
     return GlassCard(
       child: ToggleTile(
-        icon: Icons.fingerprint_rounded,
-        title: "Biometric Lock",
-        subtitle: "Require authentication on startup",
+        icon: Icons.lock_outline_rounded,
+        iconColor: Colors.cyanAccent,
+        title: 'Vault Lock',
         value: _isLockEnabled,
         onChanged: (val) async {
-          HapticService.medium();
-          await SecurityService.setLockEnabled(val);
+          HapticService.selection();
+          if (val) {
+            await SecurityService.setLockEnabled(true);
+          } else {
+            await SecurityService.setLockEnabled(false);
+          }
           setState(() => _isLockEnabled = val);
         },
       ),

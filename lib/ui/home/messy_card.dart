@@ -11,6 +11,7 @@ import 'package:void_space/services/haptic_service.dart';
 import 'package:void_space/ui/detail/item_detail_screen.dart';
 import 'package:void_space/ui/theme/void_theme.dart';
 import 'package:void_space/ui/utils/type_helpers.dart';
+import '../utils/transitions.dart';
 import '../painters/custom_painters.dart';
 
 class MessyCard extends StatefulWidget {
@@ -214,6 +215,8 @@ class _MessyCardState extends State<MessyCard> with TickerProviderStateMixin {
     );
   }
 
+  bool _isPressed = false;
+
   @override
   Widget build(BuildContext context) {
     final theme = VoidTheme.of(context);
@@ -233,6 +236,9 @@ class _MessyCardState extends State<MessyCard> with TickerProviderStateMixin {
         );
       },
       child: GestureDetector(
+        onTapDown: (_) => setState(() => _isPressed = true),
+        onTapUp: (_) => setState(() => _isPressed = false),
+        onTapCancel: () => setState(() => _isPressed = false),
         onLongPress: () {
           widget.searchFocusNode.unfocus();
           HapticService.medium();
@@ -247,21 +253,8 @@ class _MessyCardState extends State<MessyCard> with TickerProviderStateMixin {
             HapticService.light();
             Navigator.push(
               context,
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) => 
-                  ItemDetailScreen(item: widget.item, onDelete: widget.onUpdate),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: ScaleTransition(
-                      scale: Tween<double>(begin: 0.95, end: 1.0).animate(
-                        CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-                      ),
-                      child: child,
-                    ),
-                  );
-                },
-                transitionDuration: const Duration(milliseconds: 300),
+              SmoothRoute(
+                page: ItemDetailScreen(item: widget.item, onDelete: widget.onUpdate),
               ),
             );
           }
@@ -270,9 +263,14 @@ class _MessyCardState extends State<MessyCard> with TickerProviderStateMixin {
           animation: _breathingController,
           builder: (context, child) {
             final pulse = _pulseAnimation.value;
+            double scale = 1.0;
+            if (_isPressed) scale = 0.98;
+            if (widget.isSelected) scale = (0.96 + (pulse * 0.01));
+
             return AnimatedScale(
-              scale: widget.isSelected ? (0.96 + (pulse * 0.01)) : 1.0,
-              duration: const Duration(milliseconds: 200),
+              scale: scale,
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.easeOutCubic,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 constraints: const BoxConstraints(minHeight: 100),

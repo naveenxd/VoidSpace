@@ -6,6 +6,8 @@ import '../profile/profile_screen.dart';
 import '../../data/stores/preferences_store.dart';
 import '../theme/void_design.dart';
 import '../theme/void_theme.dart';
+import '../../services/haptic_service.dart';
+import '../utils/transitions.dart';
 
 class VoidHeader extends StatelessWidget {
   final double blurOpacity;
@@ -101,15 +103,18 @@ class VoidHeader extends StatelessWidget {
                       builder: (context, setInnerState) {
                         final String? currentProfilePicPath = PreferencesStore.userProfilePicture;
                         return GestureDetector(
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const ProfileScreen(),
-                            ),
-                          ).then((_) {
-                            if (context.mounted) {
-                              setInnerState(() {});
-                            }
-                          }),
+                          onTap: () {
+                            HapticService.light();
+                            Navigator.of(context).push(
+                              SmoothRoute(
+                                page: const ProfileScreen(),
+                              ),
+                            ).then((_) {
+                              if (context.mounted) {
+                                setInnerState(() {});
+                              }
+                            });
+                          },
                           child: Hero(
                             tag: 'profile_icon_hero',
                             child: Container(
