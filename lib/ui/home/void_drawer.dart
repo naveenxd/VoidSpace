@@ -111,70 +111,26 @@ class _VoidDrawerState extends State<VoidDrawer> {
                       Navigator.pop(context);
                     },
                   ),
-                  
-                  /*
-                  _buildSectionHeader("ORGANIZATION", theme),
-                  
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.folder_outlined,
-                    title: "Folders",
-                    isSelected: false,
-                    isComingSoon: true,
-                    theme: theme,
-                    onTap: () {},
-                  ),
-
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.star_border_rounded,
-                    title: "Favorites",
-                    isSelected: false,
-                    isComingSoon: true,
-                    theme: theme,
-                    onTap: () {},
-                  ),
-                  */
-
-                  _buildSectionHeader("MAINTENANCE", theme),
-
-                  _buildDrawerItem(
-                    context,
-                    icon: Icons.delete_outline_rounded,
-                    title: "Trash Bin",
-                    isSelected: false,
-                    theme: theme,
-                    onTap: () async {
-                      HapticService.light();
-                      Navigator.pop(context);
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const TrashScreen()),
-                      );
-                      if (context.mounted) {
-                        widget.onReturnFromTrash();
-                        _loadStats(); // Refresh stats when coming back
-                      }
-                    },
-                  ),
                 ],
               ),
             ),
           ),
 
-          // 3. Vault Status (Footer)
+          // 3. Status & Maintenance (Footer)
           Container(
-            padding: const EdgeInsets.all(24),
+            margin: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: theme.bgCard.withValues(alpha: 0.5),
-              border: Border(top: BorderSide(color: theme.borderSubtle)),
+              color: theme.bgCard.withValues(alpha: isDark ? 0.4 : 0.6),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: theme.borderSubtle),
             ),
             child: SafeArea(
               top: false,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
+                   Row(
                     children: [
                       Container(
                         width: 8,
@@ -196,18 +152,71 @@ class _VoidDrawerState extends State<VoidDrawer> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   _buildStatRow(
-                    'Active Nodes', 
+                    'Total Nodes', 
                     _isLoadingStats ? '...' : _activeNodesCount.toString(), 
                     theme
                   ),
                   const SizedBox(height: 8),
-                  _buildStatRow('Status', 'Synced Locally', theme),
+                  _buildStatRow('State', 'Local Only', theme),
+                  
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Divider(color: theme.borderSubtle, height: 1),
+                  ),
+
+                  // Maintenance Action
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () async {
+                        HapticService.light();
+                        Navigator.pop(context);
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const TrashScreen()),
+                        );
+                        if (context.mounted) {
+                          widget.onReturnFromTrash();
+                          _loadStats();
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.delete_outline_rounded,
+                              size: 18,
+                              color: theme.textSecondary,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              "Trash Bin",
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: theme.textSecondary,
+                              ),
+                            ),
+                            const Spacer(),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              size: 16,
+                              color: theme.textMuted,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -234,21 +243,6 @@ class _VoidDrawerState extends State<VoidDrawer> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildSectionHeader(String title, VoidTheme theme) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 24, 24, 12),
-      child: Text(
-        title,
-        style: GoogleFonts.ibmPlexMono(
-          color: theme.textTertiary.withValues(alpha: 0.5),
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.5,
-        ),
-      ),
     );
   }
 
@@ -299,22 +293,6 @@ class _VoidDrawerState extends State<VoidDrawer> {
                     ),
                   ),
                 ),
-                if (isComingSoon)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: theme.textMuted.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      'SOON',
-                      style: GoogleFonts.ibmPlexMono(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w700,
-                        color: theme.textMuted,
-                      ),
-                    ),
-                  ),
                 if (isSelected)
                   Container(
                     width: 4,
