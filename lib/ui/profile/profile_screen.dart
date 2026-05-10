@@ -47,6 +47,7 @@ class _ProfileScreenState extends State<ProfileScreen>
   String _storageSize = "0 KB";
   
   String _displayName = PreferencesStore.userName;
+  String _systemId = PreferencesStore.userSystemId;
   String? _profilePicPath = PreferencesStore.userProfilePicture;
   bool _isEditingName = false;
   final TextEditingController _nameController = TextEditingController();
@@ -108,6 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       _storageSize = "$size KB";
       _displayName = PreferencesStore.userName;
       _profilePicPath = PreferencesStore.userProfilePicture;
+      _systemId = PreferencesStore.userSystemId;
       _nameController.text = _displayName;
     });
 
@@ -297,7 +299,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                       if (!_isEditingName) ...[
                         const SizedBox(height: 4),
                         Text(
-                          'ID: PX-509-ALPHA',
+                          _systemId,
                           style: GoogleFonts.ibmPlexMono(
                             fontSize: 10,
                             color: theme.textTertiary,
