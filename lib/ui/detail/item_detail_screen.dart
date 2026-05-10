@@ -550,13 +550,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              if (_editedItem.imageUrl != null &&
-                  _editedItem.imageUrl!.isNotEmpty)
+              if ((_editedItem.imageUrl != null &&
+                      _editedItem.imageUrl!.isNotEmpty) || _editedItem.type == 'pdf' || _editedItem.type == 'document')
                 SliverAppBar(
                   expandedHeight: 400,
                   stretch: true,
-                  pinned: false, // Revert to standard scrolling behaviors
-                  // backgroundColor: Colors.transparent,
+                  pinned: false,
                   automaticallyImplyLeading: false,
                   flexibleSpace: FlexibleSpaceBar(
                     stretchModes: const [StretchMode.zoomBackground],
@@ -798,8 +797,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   Widget _buildHeaderImageContent() {
     final theme = VoidTheme.of(context);
-    // Render image if available (supports both 'image' and 'link' types)
-    if ((_editedItem.type == 'image' || _editedItem.type == 'link') && _editedItem.imageUrl != null && _editedItem.imageUrl!.isNotEmpty) {
+    final isDark = theme.brightness == Brightness.dark;
+
+    // 1. Render image if available (supports both 'image' and 'link' types)
+    if ((_editedItem.type == 'image' || _editedItem.type == 'link') && 
+        _editedItem.imageUrl != null && _editedItem.imageUrl!.isNotEmpty) {
       return Container(
         decoration: BoxDecoration(color: theme.bgCard.withValues(alpha: 0.2)),
         child: isLocalPath(_editedItem.imageUrl!)
@@ -819,6 +821,76 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               ),
       );
     }
+
+    // 2. Render Document/PDF Placeholder if no image
+    if (_editedItem.type == 'pdf' || _editedItem.type == 'document') {
+       String? fileSize;
+       final path = _editedItem.imageUrl ?? _editedItem.content;
+       if (isLocalPath(path)) {
+         final file = File(path);
+         if (file.existsSync()) {
+           final bytes = file.lengthSync();
+           if (bytes < 1024) fileSize = '${bytes}B';
+           else if (bytes < 1024 * 1024) fileSize = '${(bytes / 1024).toStringAsFixed(1)}KB';
+           else fileSize = '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
+         }
+       }
+
+       return Container(
+         width: double.infinity,
+         decoration: BoxDecoration(
+           gradient: LinearGradient(
+             begin: Alignment.topLeft,
+             end: Alignment.bottomRight,
+             colors: isDark 
+               ? [const Color(0xFF2A2A2A), const Color(0xFF121212)]
+               : [const Color(0xFFF1F3F5), const Color(0xFFDEE2E6)],
+           ),
+         ),
+         child: Column(
+           mainAxisAlignment: MainAxisAlignment.center,
+           children: [
+             Container(
+               padding: const EdgeInsets.all(24),
+               decoration: BoxDecoration(
+                 color: theme.textPrimary.withValues(alpha: 0.03),
+                 shape: BoxShape.circle,
+                 border: Border.all(color: theme.borderSubtle),
+               ),
+               child: Icon(
+                 _editedItem.type == 'pdf' 
+                    ? Icons.picture_as_pdf_rounded 
+                    : Icons.description_rounded,
+                 size: 64,
+                 color: _editedItem.type == 'pdf' ? Colors.redAccent : theme.textPrimary.withValues(alpha: 0.4),
+               ),
+             ),
+             const SizedBox(height: 24),
+             Text(
+               _editedItem.type.toUpperCase(),
+               style: GoogleFonts.ibmPlexMono(
+                 fontSize: 12,
+                 fontWeight: FontWeight.bold,
+                 letterSpacing: 2,
+                 color: theme.textSecondary,
+               ),
+             ),
+             if (fileSize != null) ...[
+               const SizedBox(height: 8),
+               Text(
+                 fileSize,
+                 style: GoogleFonts.ibmPlexMono(
+                   fontSize: 14,
+                   fontWeight: FontWeight.w500,
+                   color: theme.textTertiary,
+                 ),
+               ),
+             ],
+           ],
+         ),
+       );
+    }
+
     return const SizedBox.shrink();
   }
 
