@@ -349,6 +349,8 @@ class _ProfileScreenState extends State<ProfileScreen>
         value: _isLockEnabled,
         onChanged: (val) async {
           HapticService.selection();
+          final auth = await SecurityService.authenticate();
+          if (!auth) return;
           if (val) {
             await SecurityService.setLockEnabled(true);
           } else {
