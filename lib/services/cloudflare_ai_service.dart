@@ -214,11 +214,22 @@ Respond ONLY with valid JSON:
             final jsonMatch = RegExp(r'\{[\s\S]*\}').firstMatch(cleanNested);
             if (jsonMatch != null) {
               try {
-                final parsed = jsonDecode(jsonMatch.group(0)!);
-                title = parsed['title'] as String? ?? title;
-                description = parsed['summary'] as String? ?? parsed['description'] as String? ?? description;
-                tldr = parsed['tldr'] as String? ?? tldr;
-                tags = (parsed['tags'] as List?)?.map((e) => e.toString()).toList() ?? tags;
+                // Clean up possible escaped quotes or other common issues in AI-generated JSON strings
+                String jsonStr = jsonMatch.group(0)!;
+                // If it's a double-encoded JSON string, we might need to unescape it
+                if (jsonStr.contains('\\"')) {
+                  try {
+                    // Try to parse it as a string first to unescape
+                    final unescaped = jsonDecode('"$jsonStr"');
+                    if (unescaped is String) jsonStr = unescaped;
+                  } catch (_) {}
+                }
+                
+                final parsed = jsonDecode(jsonStr);
+                title = _cleanValue(parsed['title']);
+                description = _cleanValue(parsed['summary'] ?? parsed['description']);
+                tldr = _cleanValue(parsed['tldr']);
+                tags = (parsed['tags'] as List?)?.map((e) => _cleanValue(e)).where((e) => e.isNotEmpty).toList() ?? tags;
               } catch (e) {
                 debugPrint('CloudflareAI: JSON block found but failed to decode: $e');
               }
@@ -226,20 +237,19 @@ Respond ONLY with valid JSON:
             
             // If we still don't have a description, try label extraction
             if (description.isEmpty) {
-              title = _extractLabel(cleanNested, 'TITLE') ?? title;
-              description = _extractLabel(cleanNested, 'SUMMARY') ?? 
+              title = _cleanValue(_extractLabel(cleanNested, 'TITLE')) ?? title;
+              description = _cleanValue(_extractLabel(cleanNested, 'SUMMARY') ?? 
                            _extractLabel(cleanNested, 'DESCRIPTION') ?? 
-                           _extractLabel(cleanNested, 'DESC') ?? '';
-              tldr = _extractLabel(cleanNested, 'TLDR') ?? tldr;
+                           _extractLabel(cleanNested, 'DESC')) ?? '';
+              tldr = _cleanValue(_extractLabel(cleanNested, 'TLDR')) ?? tldr;
               
               final tagsStr = _extractLabel(cleanNested, 'TAGS');
               if (tagsStr != null) {
-                tags = tagsStr.split(RegExp(r'[,#]')).map((e) => e.trim().replaceAll('#', '')).where((e) => e.isNotEmpty).toList();
+                tags = tagsStr.split(RegExp(r'[,#]')).map((e) => _cleanValue(e)).where((e) => e.isNotEmpty).toList();
               }
               
               // Only if we REALLY have nothing, use the whole string but cleaned of tags/labels
               if (description.isEmpty) {
-                // Remove common labels from the start if the AI returned a clean paragraph but prefixed it
                 description = cleanNested.replaceFirst(RegExp(r'^(?i)(summary|description|analysis):\s*'), '');
               }
             }
@@ -282,9 +292,21 @@ Respond ONLY with valid JSON:
     }
   }
 
+  static String _cleanValue(dynamic value) {
+    if (value == null) return '';
+    String str = value.toString().trim();
+    // Remove surrounding quotes if present
+    if (str.startsWith('"') && str.endsWith('"')) {
+      str = str.substring(1, str.length - 1);
+    } else if (str.startsWith("'") && str.endsWith("'")) {
+      str = str.substring(1, str.length - 1);
+    }
+    return str.replaceAll('**', '').trim();
+  }
+
   static String? _extractLabel(String text, String label) {
     final regExp = RegExp(
-      r'(?:\*\*|#)?' + label + r'(?:\*\*|:)?\s*[:\-]?\s*(.*?)(?:\n|$|\*\*)',
+      r'(?:"|\*\*|#)?' + label + r'(?:"|\*\*|:)?\s*[:\-:=]?\s*(.*?)(?:\n|$|,|\*\*)',
       caseSensitive: false,
     );
     final match = regExp.firstMatch(text);
